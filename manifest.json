@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "obsidian-slidev",
+	"name": "Slidev",
+	"version": "0.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "This integrates Slidev presentations into obsidian",
+	"author": "Nir Tamir",
+	"authorUrl": "https://github.com/nirtamir2",
+	"fundingUrl": "https://github.com/sponsors/nirtamir2",
+	"isDesktopOnly": true
 }
