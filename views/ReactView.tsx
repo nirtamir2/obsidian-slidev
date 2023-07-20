@@ -1,13 +1,9 @@
-import type { SlidevPluginSettings } from "../SlidevSettingTab";
 import { useApp } from "./useApp";
-
-function usePluginSettings(): SlidevPluginSettings {
-	return { port: 3030 };
-}
+import { useSettings } from "./useSettings";
 
 export const ReactView = () => {
 	const { vault } = useApp();
-	const config = usePluginSettings();
+	const config = useSettings();
 	const idx = 1;
 
 	const localhost = "localhost"; //`127.0.0.1`;

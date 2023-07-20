@@ -16,7 +16,7 @@ export default class SlidevPlugin extends Plugin {
 
 		this.registerView(
 			SLIDEV_PRESENTATION_VIEW_TYPE,
-			(leaf) => new SlidevPresentationView(leaf),
+			(leaf) => new SlidevPresentationView(leaf, this.settings),
 		);
 
 		// This creates an icon in the left ribbon.
@@ -93,7 +93,9 @@ export default class SlidevPlugin extends Plugin {
 		);
 	}
 
-	// override onunload() {}
+	override onunload() {
+		//
+	}
 
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
@@ -123,5 +125,7 @@ export default class SlidevPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		this.onunload();
+		this.onload();
 	}
 }
