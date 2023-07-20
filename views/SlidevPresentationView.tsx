@@ -1,17 +1,13 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { ReactView } from "./ReactView";
+import { ItemView } from "obsidian";
+import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { AppContext } from "./AppContext";
+import { ReactView } from "./ReactView";
 
 export const SLIDEV_PRESENTATION_VIEW_TYPE = "slidev-presentation-view";
 
 export class SlidevPresentationView extends ItemView {
-	constructor(leaf: WorkspaceLeaf) {
-		super(leaf);
-	}
-
+	root: Root | null = null;
 	getViewType() {
 		return SLIDEV_PRESENTATION_VIEW_TYPE;
 	}
@@ -20,16 +16,21 @@ export class SlidevPresentationView extends ItemView {
 		return "Slidev Presentation View";
 	}
 
-	async onOpen() {
-		const root = createRoot(this.containerEl.children[1]);
-		root.render(
+	override async onOpen() {
+		if (this.containerEl.children[1] == null) {
+			throw new Error("SlidevPresentationView root not found");
+		}
+		this.root = createRoot(this.containerEl.children[1]);
+		this.root.render(
 			<AppContext.Provider value={this.app}>
 				<ReactView />
 			</AppContext.Provider>,
 		);
 	}
 
-	async onClose() {
-		ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
+	override async onClose() {
+		if (this.root != null) {
+			this.root.unmount();
+		}
 	}
 }

@@ -2,16 +2,26 @@
 	"name": "obsidian-sample-plugin",
 	"version": "1.0.0",
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"keywords": [],
+	"license": "MIT",
+	"author": "",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"dev": "node esbuild.config.mjs",
+		"format": "prettier \"**/*\" --write --ignore-unknown",
+		"lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
+		"type-check": "tsc --pretty --noEmit",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
-	"license": "MIT",
+	"dependencies": {
+		"got": "^13.0.0",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	},
 	"devDependencies": {
+		"@trivago/prettier-plugin-sort-imports": "^4.1.1",
+		"@tsconfig/strictest": "^2.0.1",
 		"@types/node": "^16.11.6",
 		"@types/react": "^18.2.15",
 		"@types/react-dom": "^18.2.7",
@@ -19,13 +29,13 @@
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
+		"eslint": "^8.45.0",
+		"eslint-config-nirtamir2": "^0.0.52",
 		"obsidian": "latest",
+		"prettier": "^3.0.0",
+		"prettier-plugin-packagejson": "^2.4.5",
+		"prettier-plugin-tailwindcss": "^0.4.1",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
-	},
-	"dependencies": {
-		"got": "^13.0.0",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
 	}
 }
