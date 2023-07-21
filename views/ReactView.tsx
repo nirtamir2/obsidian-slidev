@@ -22,6 +22,7 @@ export const ReactView = () => {
 	// 		console.log("null");
 	// 		return 1;
 	// 	}
+	//
 	// 	const cursor = activeEditor.editor.getCursor();
 	// 	console.log("activeEditor.data", activeEditor.data);
 	// 	const { line } = cursor;
