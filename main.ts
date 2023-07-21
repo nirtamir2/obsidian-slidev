@@ -1,3 +1,4 @@
+import { createServer, resolveOptions } from "@slidev/cli";
 import type { Editor } from "obsidian";
 import { MarkdownView, Plugin } from "obsidian";
 import { SampleModal } from "./SampleModal";
@@ -10,7 +11,7 @@ import {
 
 export default class SlidevPlugin extends Plugin {
 	settings: SlidevPluginSettings = DEFAULT_SETTINGS;
-
+	server: Awaited<ReturnType<typeof createServer>> | null = null;
 	override async onload() {
 		await this.loadSettings();
 
@@ -18,6 +19,23 @@ export default class SlidevPlugin extends Plugin {
 			SLIDEV_PRESENTATION_VIEW_TYPE,
 			(leaf) => new SlidevPresentationView(leaf, this.settings),
 		);
+
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (view == null) {
+			return;
+		}
+
+		const options = await resolveOptions(
+			{
+				entry: view.file.path,
+				// userRoot: "../../",
+				inspect: true,
+			},
+			"dev",
+			false,
+		);
+		//
+		this.server = await createServer(options);
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
@@ -104,7 +122,9 @@ export default class SlidevPlugin extends Plugin {
 	}
 
 	override onunload() {
-		//
+		if (this.server != null) {
+			void this.server.close();
+		}
 	}
 
 	async activateView() {

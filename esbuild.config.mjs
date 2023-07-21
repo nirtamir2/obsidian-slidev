@@ -14,8 +14,12 @@ const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
+	platform: "node",
 	entryPoints: ["main.ts"],
 	bundle: true,
+	loader: {
+		".node": "file",
+	},
 	external: [
 		"obsidian",
 		"electron",
@@ -30,10 +34,14 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
+		"@babel/preset-typescript",
+		"lightningcss",
+		"vscode-oniguruma",
+		"esbuild",
 		...builtins,
 	],
 	format: "cjs",
-	target: "es2018",
+	target: "es2021",
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
