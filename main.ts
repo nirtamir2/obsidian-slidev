@@ -1,4 +1,4 @@
-import { createServer, resolveOptions } from "@slidev/cli";
+// import { createServer, resolveOptions } from "@slidev/cli";
 import type { Editor } from "obsidian";
 import { MarkdownView, Plugin } from "obsidian";
 import { SampleModal } from "./SampleModal";
@@ -11,7 +11,7 @@ import {
 
 export default class SlidevPlugin extends Plugin {
 	settings: SlidevPluginSettings = DEFAULT_SETTINGS;
-	server: Awaited<ReturnType<typeof createServer>> | null = null;
+	// server: Awaited<ReturnType<typeof createServer>> | null = null;
 	override async onload() {
 		await this.loadSettings();
 
@@ -25,17 +25,18 @@ export default class SlidevPlugin extends Plugin {
 			return;
 		}
 
-		const options = await resolveOptions(
-			{
-				entry: view.file.path,
-				// userRoot: "../../",
-				inspect: true,
-			},
-			"dev",
-			false,
-		);
-		//
-		this.server = await createServer(options);
+		// TODO: add an option to create server
+		// const options = await resolveOptions(
+		// 	{
+		// 		entry: view.file.path,
+		// 		// userRoot: "../../",
+		// 		inspect: true,
+		// 	},
+		// 	"dev",
+		// 	false,
+		// );
+		// //
+		// this.server = await createServer(options, );
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
