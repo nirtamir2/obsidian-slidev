@@ -6,8 +6,8 @@ import {
 	on,
 	useContext,
 } from "solid-js";
-import { SlidevStoreContext } from "./SlidevStoreContext";
 import "../styles.css";
+import { SlidevStoreContext } from "./SlidevStoreContext";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
@@ -40,10 +40,9 @@ export const PresentationView = () => {
 	);
 
 	createEffect(() => {
-		on(
-			() => store.currentSlideNumber,
-			() => void refetch(),
-		);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		store.currentSlideNumber;
+		void refetch();
 	});
 
 	const url = () => {
