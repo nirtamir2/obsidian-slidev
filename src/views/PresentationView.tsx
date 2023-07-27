@@ -50,7 +50,13 @@ export const PresentationView = () => {
 	};
 
 	return (
-		<Suspense fallback={<div class="flex flex-col h-full">Loading</div>}>
+		<Suspense
+			fallback={
+				<div class="flex items-center justify-center h-full">
+					Loading slidev slides
+				</div>
+			}
+		>
 			<Show
 				when={isServerUp()}
 				fallback={
