@@ -102,12 +102,11 @@ export default defineConfig(async ({ mode }) => {
 });
 
 const loader = (config: Partial<Record<string, "binary">>): Plugin => {
-	const { extname } = path;
 	return {
 		name: "binary-boader",
 		enforce: "pre",
 		async load(id) {
-			const format = config[extname(id)];
+			const format = config[path.extname(id)];
 			if (format === "binary") {
 				const buffer = await readFile(id);
 				return {
@@ -128,11 +127,10 @@ const inject = (files: Array<string>): Plugin => {
 				const info = this.getModuleInfo(id);
 				if (info.isEntry) {
 					const code = await readFile(id, "utf8");
-					const { relative, dirname, basename, extname, join } = path;
-					const dir = dirname(id);
+					const dir = path.dirname(id);
 					const inject_code = files
-						.map((v) => relative(dir, v))
-						.map((p) => join("./", basename(p, extname(p))))
+						.map((v) => path.relative(dir, v))
+						.map((p) => path.join("./", path.basename(p, path.extname(p))))
 						.map((p) => `import './${p}'`)
 						.join(";");
 					return `

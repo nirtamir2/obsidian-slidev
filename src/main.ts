@@ -2,9 +2,9 @@
 import { parse } from "@slidev/parser";
 import type { Editor } from "obsidian";
 import { MarkdownView, Plugin } from "obsidian";
-import { SampleModal } from "../SampleModal";
-import type { SlidevPluginSettings } from "../SlidevSettingTab";
-import { DEFAULT_SETTINGS, SlidevSettingTab } from "../SlidevSettingTab";
+import { SampleModal } from "./SampleModal";
+import type { SlidevPluginSettings } from "./SlidevSettingTab";
+import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import {
 	SLIDEV_PRESENTATION_VIEW_TYPE,
 	SlidevPresentationView,

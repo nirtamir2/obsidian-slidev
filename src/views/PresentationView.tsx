@@ -1,18 +1,15 @@
-import { createEffect } from "solid-js";
+import { useContext } from "solid-js";
+import { SlidevStoreContext } from "./SlidevStoreContext";
 import { useApp } from "./useApp";
-import { useCurrentSlideNumber } from "./useCurrentSlideNumber";
 import { useSettings } from "./useSettings";
 
-export const ReactView = () => {
+const localhost = () => "localhost"; //`127.0.0.1`;
+
+export const PresentationView = () => {
 	const { vault } = useApp();
 	const config = useSettings();
-	const currentSlideNumber = useCurrentSlideNumber();
+	const store = useContext(SlidevStoreContext);
 
-	createEffect(() => {
-		console.log("currentSlideNumber 💪", currentSlideNumber);
-	});
-
-	const localhost = () => "localhost"; //`127.0.0.1`;
 	const serverAddr = () => `http://${localhost()}:${config.port}/`;
 
 	// const indexUrl = `${serverAddr}index.html`
@@ -20,7 +17,8 @@ export const ReactView = () => {
 	// if (!resolvedBody) {
 	// 	serverAddr = `http://[::1]:${config.port}/`
 	// }
-	const url = () => `${serverAddr()}${currentSlideNumber}?embedded=true`;
+	const url = () =>
+		`${serverAddr()}${store.currentSlideNumber}?embedded=true`;
 
 	// const getSlideNumber = () => {
 	// 	const activeEditor = workspace.getActiveViewOfType(MarkdownView);
@@ -55,11 +53,12 @@ export const ReactView = () => {
 			}
 			`}
 			</style>
-			<div className="container">
+			<div class="container">
 				<h4>
-					{vault.getName()} #{currentSlideNumber}
+					{vault.getName()} #{store.currentSlideNumber}
 				</h4>
 				<iframe
+					sandbox
 					title="Slidev presentation"
 					style={{ height: "100%", width: "100%" }}
 					id="iframe"

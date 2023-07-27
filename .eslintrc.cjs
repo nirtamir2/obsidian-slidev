@@ -12,6 +12,7 @@ module.exports = {
 		"@typescript-eslint/explicit-member-accessibility": "off",
 		"no-console": "off",
 		"@typescript-eslint/require-await": "off",
-		"import/no-nodejs-modules": "off"
+		"import/no-nodejs-modules": "off",
+		"@typescript-eslint/member-ordering": "off"
 	}
 };

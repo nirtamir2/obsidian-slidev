@@ -72,7 +72,7 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
 
 	plugin.registerEvent(vault.on("raw", onChange));
 
-	plugin.register(() => adapter.stopWatchPath(pluginDir));
+	plugin.register(() => { adapter.stopWatchPath(pluginDir); });
 	adapter.startWatchPath(pluginDir);
 };
 

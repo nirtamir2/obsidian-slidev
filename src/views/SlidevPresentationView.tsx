@@ -1,22 +1,22 @@
 import type { WorkspaceLeaf } from "obsidian";
 import { ItemView } from "obsidian";
-import { createRoot, createSignal, onCleanup } from "solid-js";
-import { Signal } from "solid-js/types/reactive/signal";
+import { createRoot, onCleanup } from "solid-js";
+import type { SetStoreFunction } from "solid-js/store";
+import { createStore } from "solid-js/store";
 import { insert } from "solid-js/web";
-import type { SlidevPluginSettings } from "../../SlidevSettingTab";
+import type { SlidevPluginSettings } from "../SlidevSettingTab";
 import { AppContext } from "./AppContext";
-import { CurrentSlideNumberContext } from "./CurrentSlideNumberContext";
-import { ReactView } from "./ReactView";
+import { PresentationView } from "./PresentationView";
 import { SettingsContext } from "./SettingsContext";
-
+import type { SlidevStore } from "./SlidevStoreContext";
+import { SlidevStoreContext } from "./SlidevStoreContext";
 
 export const SLIDEV_PRESENTATION_VIEW_TYPE = "slidev-presentation-view";
 
 export class SlidevPresentationView extends ItemView {
 	settings: SlidevPluginSettings;
-	currentSlideNumber: Signal<number>[0] = () => 0;
-	setCurrentSlideNumber: Signal<number>[1] = () => {
-		// noop
+	setSlidevStore: SetStoreFunction<SlidevStore> = () => {
+		return -1;
 	};
 
 	#dispose?: () => void;
@@ -24,14 +24,10 @@ export class SlidevPresentationView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
 		super(leaf);
 		this.settings = settings;
-		const [currentSlideNumber, setCurrentSlideNumber] = createSignal(0);
-		this.currentSlideNumber = currentSlideNumber;
-		this.setCurrentSlideNumber = setCurrentSlideNumber;
 	}
 
 	onChangeLine(currentSlideNumber: number) {
-		console.log("currentSlideNumber", currentSlideNumber);
-		this.setCurrentSlideNumber(currentSlideNumber);
+		this.setSlidevStore("currentSlideNumber", currentSlideNumber);
 	}
 
 	getViewType() {
@@ -42,21 +38,25 @@ export class SlidevPresentationView extends ItemView {
 		return "Slidev Presentation View";
 	}
 
-	override onOpen() {
+	override async onOpen() {
+		const [slidevStore, setSlidevStore] = createStore<SlidevStore>({
+			currentSlideNumber: 0,
+		});
+		this.setSlidevStore = setSlidevStore;
+
 		this.#dispose = createRoot((dispose) => {
 			if (this.containerEl.children[1] == null) {
 				throw new Error("SlidevPresentationView root not found");
 			}
+
 			const element = this.containerEl.children[1];
 			insert(
 				element,
 				<AppContext.Provider value={this.app}>
 					<SettingsContext.Provider value={this.settings}>
-						<CurrentSlideNumberContext.Provider
-							value={this.currentSlideNumber()}
-						>
-							<ReactView />
-						</CurrentSlideNumberContext.Provider>
+						<SlidevStoreContext.Provider value={slidevStore}>
+							<PresentationView />
+						</SlidevStoreContext.Provider>
 					</SettingsContext.Provider>
 				</AppContext.Provider>,
 			);
@@ -68,6 +68,6 @@ export class SlidevPresentationView extends ItemView {
 	}
 
 	override async onClose() {
-		this.#dispose();
+		this.#dispose?.();
 	}
 }
