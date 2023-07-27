@@ -5,6 +5,7 @@ import { MarkdownView, Plugin } from "obsidian";
 import { SampleModal } from "./SampleModal";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
+import "./styles.css";
 import {
 	SLIDEV_PRESENTATION_VIEW_TYPE,
 	SlidevPresentationView,

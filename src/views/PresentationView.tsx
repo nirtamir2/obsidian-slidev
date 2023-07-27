@@ -7,6 +7,7 @@ import {
 	useContext,
 } from "solid-js";
 import { SlidevStoreContext } from "./SlidevStoreContext";
+import "../styles.css";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
@@ -50,36 +51,27 @@ export const PresentationView = () => {
 	};
 
 	return (
-		<>
-			<style>
-				{`
-			.container {
-			display: flex;
-			flex-direction: column;
-			height: 100%;
-			}
-			`}
-			</style>
-			<Suspense fallback={<div class="container">Loading</div>}>
-				<Show
-					when={isServerUp()}
-					fallback={<div class="container">Server is down</div>}
-				>
-					<div class="container">
-						<h4>
-							{vault.getName()} #{store.currentSlideNumber}
-						</h4>
-						{/* eslint-disable-next-line react/iframe-missing-sandbox */}
-						<iframe
-							sandbox="allow-scripts allow-same-origin"
-							title="Slidev presentation"
-							style={{ height: "100%", width: "100%" }}
-							id="iframe"
-							src={url()}
-						/>
-					</div>
-				</Show>
-			</Suspense>
-		</>
+		<Suspense fallback={<div class="flex flex-col h-full">Loading</div>}>
+			<Show
+				when={isServerUp()}
+				fallback={
+					<div class="flex flex-col h-full">Server is down</div>
+				}
+			>
+				<div class="flex flex-col h-full">
+					<h4>
+						{vault.getName()} #{store.currentSlideNumber}
+					</h4>
+					{/* eslint-disable-next-line react/iframe-missing-sandbox */}
+					<iframe
+						sandbox="allow-scripts allow-same-origin"
+						title="Slidev presentation"
+						class="h-full w-full"
+						id="iframe"
+						src={url()}
+					/>
+				</div>
+			</Show>
+		</Suspense>
 	);
 };
