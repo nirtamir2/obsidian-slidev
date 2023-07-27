@@ -13,10 +13,9 @@
 		"isolatedModules": true,
 		"strictNullChecks": true,
 		"lib": ["DOM", "ES2021"],
-		"jsx": "react-jsx"
+		"jsx": "preserve",
+		"jsxImportSource": "solid-js",
+		"typeRoots": ["./typings", "./node_modules/@types"]
 	},
-	"include": ["**/*.ts"],
-	"exclude": [
-		"node_modules"
-	]
+	"include": ["**/*.ts", "**/*.tsx"]
 }

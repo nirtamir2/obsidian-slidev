@@ -7,8 +7,8 @@
 	"author": "",
 	"main": "main.js",
 	"scripts": {
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"dev": "node esbuild.config.mjs",
+		"dev": "vite build -w -m development",
+		"build": "vite build",
 		"format": "prettier \"**/*\" --write --ignore-unknown",
 		"lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
 		"type-check": "tsc --pretty --noEmit",
@@ -20,16 +20,12 @@
 		"@slidev/parser": "^0.42.5",
 		"@slidev/types": "^0.42.5",
 		"got": "^13.0.0",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"vite": "^4.4.6"
+		"solid-js": "^1.7.8"
 	},
 	"devDependencies": {
 		"@trivago/prettier-plugin-sort-imports": "^4.2.0",
 		"@tsconfig/strictest": "^2.0.1",
 		"@types/node": "^16.11.6",
-		"@types/react": "^18.2.15",
-		"@types/react-dom": "^18.2.7",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.18.15",
 		"eslint": "^8.45.0",
@@ -39,6 +35,9 @@
 		"prettier-plugin-packagejson": "^2.4.5",
 		"prettier-plugin-tailwindcss": "^0.4.1",
 		"tslib": "2.6.0",
-		"typescript": "5.1.6"
+		"typescript": "5.1.6",
+		"vite": "^4.4.6",
+		"vite-plugin-solid": "^2.7.0",
+		"vite-plugin-static-copy": "^0.17.0"
 	}
 }

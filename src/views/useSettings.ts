@@ -1,5 +1,5 @@
-import { useContext } from "react";
-import { SlidevPluginSettings } from "../SlidevSettingTab";
+import { useContext } from "solid-js";
+import { SlidevPluginSettings } from "../../SlidevSettingTab";
 import { SettingsContext } from "./SettingsContext";
 
 export const useSettings = (): SlidevPluginSettings => {

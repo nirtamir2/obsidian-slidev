@@ -1,6 +1,6 @@
 import type { App} from "obsidian";
 import { Notice, PluginSettingTab, Setting } from "obsidian";
-import type SlidevPlugin from "./main";
+import type SlidevPlugin from "./src/main";
 
 export interface SlidevPluginSettings {
 	port: number;

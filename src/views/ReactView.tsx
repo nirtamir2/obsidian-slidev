@@ -1,3 +1,4 @@
+import { createEffect } from "solid-js";
 import { useApp } from "./useApp";
 import { useCurrentSlideNumber } from "./useCurrentSlideNumber";
 import { useSettings } from "./useSettings";
@@ -7,15 +8,19 @@ export const ReactView = () => {
 	const config = useSettings();
 	const currentSlideNumber = useCurrentSlideNumber();
 
-	const localhost = "localhost"; //`127.0.0.1`;
-	const serverAddr = `http://${localhost}:${config.port}/`;
+	createEffect(() => {
+		console.log("currentSlideNumber 💪", currentSlideNumber);
+	});
+
+	const localhost = () => "localhost"; //`127.0.0.1`;
+	const serverAddr = () => `http://${localhost()}:${config.port}/`;
 
 	// const indexUrl = `${serverAddr}index.html`
 	// const resolvedBody = await got.get(indexUrl, { responseType: 'text', resolveBodyOnly: true }).catch(() => null)
 	// if (!resolvedBody) {
 	// 	serverAddr = `http://[::1]:${config.port}/`
 	// }
-	const url = `${serverAddr}${currentSlideNumber}?embedded=true`;
+	const url = () => `${serverAddr()}${currentSlideNumber}?embedded=true`;
 
 	// const getSlideNumber = () => {
 	// 	const activeEditor = workspace.getActiveViewOfType(MarkdownView);
@@ -51,12 +56,14 @@ export const ReactView = () => {
 			`}
 			</style>
 			<div className="container">
-				<h4>{vault.getName()} #{currentSlideNumber}</h4>
+				<h4>
+					{vault.getName()} #{currentSlideNumber}
+				</h4>
 				<iframe
 					title="Slidev presentation"
 					style={{ height: "100%", width: "100%" }}
 					id="iframe"
-					src={url}
+					src={url()}
 				/>
 			</div>
 		</>

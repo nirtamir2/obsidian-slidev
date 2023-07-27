@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext } from "solid-js";
 import type { App } from "obsidian";
 import { AppContext } from "./AppContext";
 
