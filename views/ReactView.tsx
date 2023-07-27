@@ -1,10 +1,11 @@
 import { useApp } from "./useApp";
+import { useCurrentSlideNumber } from "./useCurrentSlideNumber";
 import { useSettings } from "./useSettings";
 
 export const ReactView = () => {
 	const { vault } = useApp();
 	const config = useSettings();
-	const idx = 1;
+	const currentSlideNumber = useCurrentSlideNumber();
 
 	const localhost = "localhost"; //`127.0.0.1`;
 	const serverAddr = `http://${localhost}:${config.port}/`;
@@ -14,7 +15,7 @@ export const ReactView = () => {
 	// if (!resolvedBody) {
 	// 	serverAddr = `http://[::1]:${config.port}/`
 	// }
-	const url = `${serverAddr}${idx}?embedded=true`;
+	const url = `${serverAddr}${currentSlideNumber}?embedded=true`;
 
 	// const getSlideNumber = () => {
 	// 	const activeEditor = workspace.getActiveViewOfType(MarkdownView);
@@ -50,7 +51,7 @@ export const ReactView = () => {
 			`}
 			</style>
 			<div className="container">
-				<h4>{vault.getName()}</h4>
+				<h4>{vault.getName()} #{currentSlideNumber}</h4>
 				<iframe
 					title="Slidev presentation"
 					style={{ height: "100%", width: "100%" }}

@@ -1,4 +1,5 @@
 // import { createServer, resolveOptions } from "@slidev/cli";
+import { parse } from "@slidev/parser";
 import type { Editor } from "obsidian";
 import { MarkdownView, Plugin } from "obsidian";
 import { SampleModal } from "./SampleModal";
@@ -97,7 +98,7 @@ export default class SlidevPlugin extends Plugin {
 		//
 		// 	// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// 	// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", () => {
+		this.registerDomEvent(document, "click", async () => {
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
 				return;
@@ -105,10 +106,21 @@ export default class SlidevPlugin extends Plugin {
 
 			const cursor = view.editor.getCursor();
 			const { line } = cursor;
-			console.log("line", line);
 			const text = view.editor.getValue();
+			const parsedView = await parse(text, view.file.path);
+			const currentSlide = parsedView.slides.find((slide) => {
+				return slide.start <= line && slide.end >= line;
+			});
+			const slideIndex = currentSlide == null ? 0 : currentSlide.index;
+
+			const viewInstance = this.getViewInstance();
+			if (viewInstance != null) {
+				viewInstance.onChangeLine(slideIndex);
+			}
+
 			// const lineCount = view.editor.lineCount();
-			console.log("view.editor.getValue()", text);
+			// console.log("view.editor.getValue()", text);
+			// console.log({ slideIndex, line, currentSlide });
 		});
 		//
 		// 	// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
@@ -123,9 +135,21 @@ export default class SlidevPlugin extends Plugin {
 	}
 
 	override onunload() {
-		if (this.server != null) {
-			void this.server.close();
+		// if (this.server != null) {
+		// 	void this.server.close();
+		// }
+	}
+
+	getViewInstance(): SlidevPresentationView | null {
+		for (const leaf of this.app.workspace.getLeavesOfType(
+			SLIDEV_PRESENTATION_VIEW_TYPE,
+		)) {
+			const { view } = leaf;
+			if (view instanceof SlidevPresentationView) {
+				return view;
+			}
 		}
+		return null;
 	}
 
 	async activateView() {
