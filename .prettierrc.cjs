@@ -2,7 +2,7 @@ module.exports = {
 	plugins: [
 		require.resolve("prettier-plugin-packagejson"),
 		require.resolve("@trivago/prettier-plugin-sort-imports"),
-		// require.resolve("prettier-plugin-tailwindcss"), // must come last
+		require.resolve("prettier-plugin-tailwindcss"), // must come last
 	],
 	// pluginSearchDirs: false, // for prettier-plugin-tailwindcss to work with other plugins
 	// @see https://github.com/tailwindlabs/prettier-plugin-tailwindcss#resolving-your-tailwind-configuration

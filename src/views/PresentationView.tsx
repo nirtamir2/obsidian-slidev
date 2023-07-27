@@ -54,7 +54,21 @@ export const PresentationView = () => {
 			<Show
 				when={isServerUp()}
 				fallback={
-					<div class="flex flex-col h-full">Server is down</div>
+					<div class="flex items-center justify-center h-full">
+						<div class="flex items-center flex-col gap-4">
+							<div class="text-xl text-red-400">
+								Slidev server is down
+							</div>
+							<div>
+								No server found at{" "}
+								{/* eslint-disable-next-line react/forbid-elements */}
+								<a href={serverAddr()}>{serverAddr()}</a>
+							</div>
+							<div>
+								Try running <code>slidev</code>
+							</div>
+						</div>
+					</div>
 				}
 			>
 				<div class="flex flex-col h-full">
