@@ -13,9 +13,9 @@ import { useSettings } from "./useSettings";
 
 const localhost = () => "localhost"; //`127.0.0.1`;
 
-async function fetchIsServerUp(serverAddr: string): Promise<boolean> {
+async function fetchIsServerUp(serverBaseUrl: string): Promise<boolean> {
 	try {
-		const response = await fetch(`${serverAddr}index.html`);
+		const response = await fetch(`${serverBaseUrl}index.html`);
 		try {
 			await response.text();
 			return true;
@@ -32,10 +32,10 @@ export const PresentationView = () => {
 	const config = useSettings();
 	const store = useContext(SlidevStoreContext);
 
-	const serverAddr = () => `http://${localhost()}:${config.port}/`;
+	const serverBaseUrl = () => `http://${localhost()}:${config.port}/`;
 
 	const [isServerUp, { refetch }] = createResource(
-		serverAddr,
+		serverBaseUrl,
 		fetchIsServerUp,
 	);
 
@@ -45,8 +45,8 @@ export const PresentationView = () => {
 		void refetch();
 	});
 
-	const url = () => {
-		return `${serverAddr()}${store.currentSlideNumber}?embedded=true`;
+	const iframeSrcUrl = () => {
+		return `${serverBaseUrl()}${store.currentSlideNumber}?embedded=true`;
 	};
 
 	return (
@@ -62,7 +62,7 @@ export const PresentationView = () => {
 							<div>
 								No server found at{" "}
 								{/* eslint-disable-next-line react/forbid-elements */}
-								<a href={serverAddr()}>{serverAddr()}</a>
+								<a href={serverBaseUrl()}>{serverBaseUrl()}</a>
 							</div>
 							<div>
 								Try running <code>slidev</code>
@@ -81,7 +81,7 @@ export const PresentationView = () => {
 						title="Slidev presentation"
 						class="h-full w-full"
 						id="iframe"
-						src={url()}
+						src={iframeSrcUrl()}
 					/>
 				</div>
 			</Show>
