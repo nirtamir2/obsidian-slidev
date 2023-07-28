@@ -55,7 +55,7 @@ export default class SlidevPlugin extends Plugin {
 		statusBarItemEl.setText("Status Bar Text");
 
 		this.addCommand({
-			id: "open-slidev--presentation-view",
+			id: "open-slidev-presentation-view",
 			name: "Open slidev presentation view",
 			callback: () => {
 				void this.activateView();
