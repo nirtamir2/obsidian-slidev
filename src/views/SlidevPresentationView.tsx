@@ -1,4 +1,4 @@
-import type { WorkspaceLeaf } from "obsidian";
+import type { IconName, WorkspaceLeaf } from "obsidian";
 import { ItemView } from "obsidian";
 import { createRoot, onCleanup } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
@@ -21,6 +21,9 @@ export class SlidevPresentationView extends ItemView {
 
 	#dispose?: () => void;
 
+	override getIcon(): IconName {
+		return "presentation";
+	}
 	constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
 		super(leaf);
 		this.settings = settings;

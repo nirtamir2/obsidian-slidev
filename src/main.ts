@@ -1,6 +1,6 @@
 // import { createServer, resolveOptions } from "@slidev/cli";
 import { parse } from "@slidev/parser";
-import { MarkdownView, Plugin } from "obsidian";
+import { App, MarkdownView, Plugin, PluginManifest, debounce } from "obsidian";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import "./styles.css";
@@ -12,8 +12,21 @@ import {
 export default class SlidevPlugin extends Plugin {
 	settings: SlidevPluginSettings = DEFAULT_SETTINGS;
 	// server: Awaited<ReturnType<typeof createServer>> | null = null;
+
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+
+		this.saveSettings = debounce(
+			this.saveSettings.bind(this),
+			1000,
+			true,
+		) as unknown as typeof this.saveSettings;
+	}
 	override async onload() {
 		await this.loadSettings();
+
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new SlidevSettingTab(this.app, this));
 
 		this.registerView(
 			SLIDEV_PRESENTATION_VIEW_TYPE,
@@ -57,13 +70,11 @@ export default class SlidevPlugin extends Plugin {
 		this.addCommand({
 			id: "open-slidev-presentation-view",
 			name: "Open slidev presentation view",
+			icon: "presentation",
 			callback: () => {
 				void this.activateView();
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SlidevSettingTab(this.app, this));
 
 		// TODO: use different event for it instead of just click. Maybe keydown too.
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
