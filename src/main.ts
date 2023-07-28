@@ -64,9 +64,10 @@ export default class SlidevPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SlidevSettingTab(this.app, this));
-		//
-		// 	// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// 	// Using this function will automatically remove the event listener when this plugin is disabled.
+
+		// TODO: use different event for it instead of just click. Maybe keydown too.
+		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, "click", async () => {
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
