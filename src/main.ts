@@ -92,7 +92,7 @@ export default class SlidevPlugin extends Plugin {
 			const currentSlide = parsedView.slides.find((slide) => {
 				return slide.start <= line && slide.end >= line;
 			});
-			const slideIndex = currentSlide == null ? 0 : currentSlide.index;
+			const slideIndex = currentSlide == null ? 0 : currentSlide.index + 1;
 
 			const viewInstance = this.getViewInstance();
 			if (viewInstance != null) {
