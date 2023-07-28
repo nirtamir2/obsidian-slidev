@@ -3,7 +3,6 @@ import {
 	Suspense,
 	createEffect,
 	createResource,
-	on,
 	useContext,
 } from "solid-js";
 import "../styles.css";
@@ -71,7 +70,7 @@ export const PresentationView = () => {
 								<a href={serverBaseUrl()}>{serverBaseUrl()}</a>
 							</div>
 							<div>
-								Try running <code>slidev</code>
+								Try running <code>slidev slides.md</code>
 							</div>
 						</div>
 					</div>
