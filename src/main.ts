@@ -35,15 +35,36 @@ export default class SlidevPlugin extends Plugin {
 			(leaf) => new SlidevPresentationView(leaf, this.settings),
 		);
 
-		this.registerMarkdownPostProcessor((_element, context) => {
-			const hrBlocks = document.querySelectorAll(
-				".markdown-preview-view hr",
-			);
-			for (let index = 0; index < hrBlocks.length; index++) {
-				const hrBlock = hrBlocks.item(index) as HTMLElement;
-				context.addChild(new SlideBoundaryRender(hrBlock, index + 1));
-			}
-		});
+		// this.registerEditorExtension(slidevExtension);
+
+		const style = document.createElement("style");
+		style.textContent = `
+
+
+.cm-editor {
+  counter-reset: slidev;
+}
+
+.cm-editor .hr.cm-line {
+  counter-increment: slidev;
+}
+
+.cm-editor .hr.cm-line:before {
+  font-size: var(--font-smaller);
+  content: "(#" counter(slidev) ") ";
+}
+`;
+		document.head.append(style);
+
+		// this.registerMarkdownPostProcessor((_element, context) => {
+		// 	const hrBlocks = document.querySelectorAll(
+		// 		".markdown-preview-view hr",
+		// 	);
+		// 	for (let index = 0; index < hrBlocks.length; index++) {
+		// 		const hrBlock = hrBlocks.item(index) as HTMLElement;
+		// 		context.addChild(new SlideBoundaryRender(hrBlock, index + 1));
+		// 	}
+		// });
 
 		// const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 		// if (view == null) {
