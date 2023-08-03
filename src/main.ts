@@ -1,6 +1,8 @@
 // import { createServer, resolveOptions } from "@slidev/cli";
 import { parse } from "@slidev/parser";
-import { App, MarkdownView, Plugin, PluginManifest, debounce } from "obsidian";
+import type { App, PluginManifest } from "obsidian";
+import { MarkdownView, Plugin, debounce } from "obsidian";
+import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import "./styles.css";
@@ -33,10 +35,20 @@ export default class SlidevPlugin extends Plugin {
 			(leaf) => new SlidevPresentationView(leaf, this.settings),
 		);
 
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (view == null) {
-			return;
-		}
+		this.registerMarkdownPostProcessor((_element, context) => {
+			const hrBlocks = document.querySelectorAll(
+				".markdown-preview-view hr",
+			);
+			for (let index = 0; index < hrBlocks.length; index++) {
+				const hrBlock = hrBlocks.item(index) as HTMLElement;
+				context.addChild(new SlideBoundaryRender(hrBlock, index + 1));
+			}
+		});
+
+		// const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		// if (view == null) {
+		// 	return;
+		// }
 
 		// TODO: add an option to create server
 		// const options = await resolveOptions(
@@ -92,7 +104,8 @@ export default class SlidevPlugin extends Plugin {
 			const currentSlide = parsedView.slides.find((slide) => {
 				return slide.start <= line && slide.end >= line;
 			});
-			const slideIndex = currentSlide == null ? 0 : currentSlide.index + 1;
+			const slideIndex =
+				currentSlide == null ? 0 : currentSlide.index + 1;
 
 			const viewInstance = this.getViewInstance();
 			if (viewInstance != null) {
