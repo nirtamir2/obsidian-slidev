@@ -90,36 +90,48 @@ export default class SlidevPlugin extends Plugin {
 
 		// TODO: use different event for it instead of just click. Maybe keydown too.
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, "click", async () => {
-			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-			if (view == null) {
-				return;
-			}
-
-			const cursor = view.editor.getCursor();
-			const { line } = cursor;
-			const text = view.editor.getValue();
-			const parsedView = await parse(text, view.file.path);
-			const currentSlide = parsedView.slides.find((slide) => {
-				return slide.start <= line && slide.end >= line;
-			});
-			const slideIndex =
-				currentSlide == null ? 0 : currentSlide.index + 1;
-
-			const viewInstance = this.getViewInstance();
-			if (viewInstance != null) {
-				viewInstance.onChangeLine(slideIndex);
-			}
-
-			// const lineCount = view.editor.lineCount();
-			// console.log("view.editor.getValue()", text);
-			// console.log({ slideIndex, line, currentSlide });
+			await this.navigateToCurrentSlide();
 		});
+
+		this.registerDomEvent(
+			document,
+			"keydown",
+			debounce(async () => {
+				await this.navigateToCurrentSlide();
+			}, 100),
+		);
 
 		if (import.meta.env.DEV) {
 			window.hmr(this);
 		}
+	}
+
+	async navigateToCurrentSlide() {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (view == null) {
+			return;
+		}
+
+		const cursor = view.editor.getCursor();
+		const { line } = cursor;
+		const text = view.editor.getValue();
+		const parsedView = await parse(text, view.file.path);
+		const currentSlide = parsedView.slides.find((slide) => {
+			return slide.start <= line && slide.end >= line;
+		});
+		const slideIndex = currentSlide == null ? 0 : currentSlide.index + 1;
+
+		const viewInstance = this.getViewInstance();
+		if (viewInstance != null) {
+			viewInstance.onChangeLine(slideIndex);
+		}
+
+		// const lineCount = view.editor.lineCount();
+		// console.log("view.editor.getValue()", text);
+		// console.log({ slideIndex, line, currentSlide });
 	}
 
 	override onunload() {
