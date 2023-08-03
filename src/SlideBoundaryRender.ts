@@ -15,8 +15,8 @@ export class SlideBoundaryRender extends MarkdownRenderChild {
 		slideNumberElement.style.position = "absolute";
 		slideNumberElement.style.top = "-0.8rem";
 		slideNumberElement.style.left = "-3rem";
-		slideNumberElement.style.color = "var(--color-base-70)";
-		slideNumberElement.style.fontSize = "0.8rem";
+		slideNumberElement.style.color = "var(--hr-color)";
+		slideNumberElement.style.fontSize = "var(--font-smaller)";
 
 		const root = this.containerEl.createDiv();
 		root.style.position = "relative";
