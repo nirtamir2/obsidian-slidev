@@ -1,15 +1,17 @@
-import type { App} from "obsidian";
-import { Notice, PluginSettingTab, Setting } from "obsidian";
+import type { App } from "obsidian";
+import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
 
 export interface SlidevPluginSettings {
 	port: number;
-	wslMode?: boolean
+	wslMode: boolean;
+	packageManager: "npm" | "pnpm" | "yarn";
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
-	wslMode: false
+	wslMode: false,
+	packageManager: "npm",
 };
 
 function isPortNumber(parsedNumber: number) {
@@ -42,7 +44,7 @@ export class SlidevSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(String(DEFAULT_SETTINGS.port))
 					.setValue(String(this.plugin.settings.port))
-					.onChange(async (value) => {
+					.onChange(debounce(async (value) => {
 						const parsedNumber = Number(value);
 						if (!isPortNumber(parsedNumber)) {
 							new Notice("Port should be an integer");
@@ -50,7 +52,35 @@ export class SlidevSettingTab extends PluginSettingTab {
 						}
 						this.plugin.settings.port = parsedNumber;
 						await this.plugin.saveSettings();
-					}),
+					}, 750)),
 			);
+
+		new Setting(containerEl)
+			.setName("wslMode (Windows only)")
+			.setDesc("Should use WSL")
+			.addToggle((value) =>
+				value.setValue(this.plugin.settings.wslMode).onChange(
+					debounce(async (value) => {
+						this.plugin.settings.wslMode = value;
+						await this.plugin.saveSettings();
+					}, 750),
+				),
+			);
+
+		new Setting(containerEl)
+			.setName("Package manager")
+			.setDesc("Which package manager to use with slidev")
+			.addDropdown((cb) => {
+				cb.addOption("npm", "npm")
+					.addOption("yarn", "yarn")
+					.addOption("pnpm", "pnpm")
+					.setValue(this.plugin.settings.packageManager)
+					.onChange(
+						debounce(async (value) => {
+							this.plugin.settings.packageManager = value;
+							await this.plugin.saveSettings();
+						}, 750),
+					);
+			});
 	}
 }

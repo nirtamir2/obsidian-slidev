@@ -30,7 +30,7 @@ export default class SlidevPlugin extends Plugin {
 	}
 
 	override async onload() {
-		await this.loadSettings();
+		await this.#loadSettings();
 
 		this.executors = new ExecutorContainer(this);
 
@@ -62,7 +62,7 @@ export default class SlidevPlugin extends Plugin {
 			"presentation",
 			"Open Slidev Presentation View",
 			() => {
-				void this.activateView();
+				void this.#activateView();
 			},
 		);
 
@@ -78,7 +78,7 @@ export default class SlidevPlugin extends Plugin {
 			name: "Open slidev presentation view",
 			icon: "presentation",
 			callback: () => {
-				void this.activateView();
+				void this.#activateView();
 			},
 		});
 
@@ -95,7 +95,13 @@ export default class SlidevPlugin extends Plugin {
 				const currentSlideFile =
 					activeFile == null ? "" : activeFile.path;
 				const sourceCommand = `source $HOME/.zshrc`;
-				const packageManagerCommand = `pnpm dlx`;
+				const packageManagerCommand =
+					this.settings.packageManager === "pnpm"
+						? "pnpm dlx"
+						: this.settings.packageManager === "yarn"
+						? "yarn exec"
+						: "npx";
+
 				const codeBlockContent = `${sourceCommand}
 cd ${vaultPath}
 ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
@@ -112,7 +118,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 
 				const outputter = new Outputter(codeBlock, false);
 
-				this.runCodeInShell({
+				this.#runCodeInShell({
 					codeBlockContent: codeBlockContent,
 					outputter: outputter,
 					cmd: "bash",
@@ -138,14 +144,14 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, "click", async () => {
-			await this.navigateToCurrentSlide();
+			await this.#navigateToCurrentSlide();
 		});
 
 		this.registerDomEvent(
 			document,
 			"keydown",
 			debounce(async () => {
-				await this.navigateToCurrentSlide();
+				await this.#navigateToCurrentSlide();
 			}, 100),
 		);
 
@@ -154,7 +160,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		// }
 	}
 
-	async navigateToCurrentSlide() {
+	async #navigateToCurrentSlide() {
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (view == null) {
 			return;
@@ -169,7 +175,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		});
 		const slideIndex = currentSlide == null ? 0 : currentSlide.index + 1;
 
-		const viewInstance = this.getViewInstance();
+		const viewInstance = this.#getViewInstance();
 		if (viewInstance != null) {
 			viewInstance.onChangeLine(slideIndex);
 		}
@@ -184,7 +190,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		// 	void this.server.close();
 		// }
 		for (const executor of this.executors ?? []) {
-			void executor.stop()
+			void executor.stop();
 		}
 	}
 
@@ -200,7 +206,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 	 * @param ext The file extension of the temporary file. Should correspond to the language of the code. (e.g. py, ...)
 	 * @param file The address of the file which the code originates from
 	 */
-	private async runCodeInShell({
+	async #runCodeInShell({
 		codeBlockContent,
 		outputter,
 		cmd,
@@ -226,7 +232,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		);
 	}
 
-	getViewInstance(): SlidevPresentationView | null {
+	#getViewInstance(): SlidevPresentationView | null {
 		for (const leaf of this.app.workspace.getLeavesOfType(
 			SLIDEV_PRESENTATION_VIEW_TYPE,
 		)) {
@@ -238,7 +244,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		return null;
 	}
 
-	async activateView() {
+	async #activateView() {
 		this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
 
 		await this.app.workspace.getRightLeaf(false).setViewState({
@@ -256,7 +262,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		this.app.workspace.revealLeaf(viewLeaf);
 	}
 
-	async loadSettings() {
+	async #loadSettings() {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
@@ -274,7 +280,6 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-		// TODO: do it more elegantly instead of unload and load
 		this.onunload();
 		void this.onload();
 	}
