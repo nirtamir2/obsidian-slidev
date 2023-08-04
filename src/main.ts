@@ -1,9 +1,9 @@
 // import { createServer, resolveOptions } from "@slidev/cli";
 import { parse } from "@slidev/parser";
 import type { App, PluginManifest } from "obsidian";
-import { MarkdownView, Plugin, debounce } from "obsidian";
-import { Outputter } from "../obsidian-execute-code/src/Outputter";
+import { FileSystemAdapter, MarkdownView, Plugin, debounce } from "obsidian";
 import ExecutorContainer from "./Executor/ExecutorContainer";
+import { Outputter } from "./Executor/Outputter";
 import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
@@ -88,17 +88,28 @@ export default class SlidevPlugin extends Plugin {
 			icon: "play",
 			callback: () => {
 				// TODO: make it generic and use the settings for it
-				const codeBlockContent = `source $HOME/.zshrc
-cd Users/nirtamir/dev/slides/introduction-to-solid-js/
-pnpm dlx @slidev/cli slides.md`;
+
+				const vaultPath = this.#getVaultPath();
+
+				const activeFile = this.app.workspace.getActiveFile();
+				const currentSlideFile =
+					activeFile == null ? "" : activeFile.path;
+				const sourceCommand = `source $HOME/.zshrc`;
+				const packageManagerCommand = `pnpm dlx`;
+				const codeBlockContent = `${sourceCommand}
+cd ${vaultPath}
+${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 
 				// TODO: output the code better - maybe in the view
 				const codeBlock = document.createElement("code");
 				codeBlock.style = {
-					background: "red",
-					padding: 20
-				}
-				document.body.appendChild(codeBlock)
+					padding: 20,
+					maxHeight: 100,
+				};
+				document
+					.querySelector(".workspace-leaf-content")
+					?.appendChild(codeBlock);
+
 				const outputter = new Outputter(codeBlock, false);
 
 				const button = document.createElement("button");
@@ -202,13 +213,9 @@ pnpm dlx @slidev/cli slides.md`;
 		ext: string,
 		file: string,
 	) {
-		console.log("main#runCodeInShell()");
 		const executor = this.executors.getExecutorFor(file, true);
-		console.log("main#runCodeInShell()", executor);
 
-		executor
-			.run(codeBlockContent, outputter, cmd, cmdArgs, ext)
-			.then((e) => console.log("finish", e));
+		executor.run(codeBlockContent, outputter, cmd, cmdArgs, ext);
 	}
 
 	getViewInstance(): SlidevPresentationView | null {
@@ -247,6 +254,14 @@ pnpm dlx @slidev/cli slides.md`;
 			DEFAULT_SETTINGS,
 			(await this.loadData()) as SlidevPluginSettings,
 		);
+	}
+
+	#getVaultPath() {
+		const adapter = this.app.vault.adapter;
+		if (adapter instanceof FileSystemAdapter) {
+			return adapter.getBasePath();
+		}
+		return `Users/nirtamir/dev/slides/introduction-to-solid-js/`;
 	}
 
 	async saveSettings() {

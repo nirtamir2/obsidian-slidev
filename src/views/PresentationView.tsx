@@ -51,7 +51,7 @@ export const PresentationView = () => {
 	return (
 		<Suspense
 			fallback={
-				<div class="flex items-center justify-center h-full">
+				<div class="flex h-full items-center justify-center">
 					Loading slidev slides
 				</div>
 			}
@@ -59,8 +59,8 @@ export const PresentationView = () => {
 			<Show
 				when={isServerUp()}
 				fallback={
-					<div class="flex items-center justify-center h-full">
-						<div class="flex items-center flex-col gap-4">
+					<div class="flex h-full items-center justify-center">
+						<div class="flex flex-col items-center gap-4">
 							<div class="text-xl text-red-400">
 								Slidev server is down
 							</div>
@@ -76,9 +76,17 @@ export const PresentationView = () => {
 					</div>
 				}
 			>
-				<div class="flex flex-col h-full">
+				<div class="flex h-full flex-col">
 					<h4>
 						{vault.getName()} #{store.currentSlideNumber}
+						<button
+							type="button"
+							onClick={() => {
+								console.log(`open ${serverBaseUrl()}`);
+							}}
+						>
+							Open presentation
+						</button>
 					</h4>
 					{/* eslint-disable-next-line react/iframe-missing-sandbox */}
 					<iframe
