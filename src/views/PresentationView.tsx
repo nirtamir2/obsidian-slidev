@@ -1,5 +1,5 @@
+import type { JSXElement } from "solid-js";
 import {
-	JSXElement,
 	Show,
 	Suspense,
 	createEffect,
@@ -33,7 +33,8 @@ function RibbonButton(props: {
 	children: JSXElement;
 }) {
 	return (
-		<div
+		<button
+			type="button"
 			class="clickable-icon side-dock-ribbon-action slidev-plugin-ribbon-class"
 			aria-label={props.label}
 			data-tooltip-position="top"
@@ -44,7 +45,7 @@ function RibbonButton(props: {
 			}}
 		>
 			{props.children}
-		</div>
+		</button>
 	);
 }
 

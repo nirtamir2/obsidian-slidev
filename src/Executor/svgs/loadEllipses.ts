@@ -13,6 +13,6 @@ const svg = parseHTML(`<svg width="10" height="10" viewBox="0 0 10 10" xmlns="ht
     <circle cx="8.5" r="1" cy="5" style="fill:currentColor; animation: load_ellipse_anim 1.3s infinite ease-in-out 0.9s;"/>
 </svg>`);
 
-export default () => {
+export default function loadElipse(){
     return svg.cloneNode(true);
 }

@@ -1,7 +1,8 @@
-import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import type { ChildProcessWithoutNullStreams} from "node:child_process";
+import { spawn } from "node:child_process";
 import { promises } from "node:fs";
 import { Notice } from "obsidian";
-import { SlidevPluginSettings } from "../SlidevSettingTab";
+import type { SlidevPluginSettings } from "../SlidevSettingTab";
 import Executor from "./Executor";
 import type { Outputter } from "./Outputter";
 import windowsPathToWsl from "./windowsPathToWsl.js";

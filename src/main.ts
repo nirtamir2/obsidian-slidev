@@ -112,16 +112,14 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 
 				const outputter = new Outputter(codeBlock, false);
 
-				const button = document.createElement("button");
-				void this.runCodeInShell(
-					codeBlockContent,
-					outputter,
-					button,
-					"bash",
-					"",
-					"zsh",
-					"start-server.zsh",
-				);
+				this.runCodeInShell({
+					codeBlockContent: codeBlockContent,
+					outputter: outputter,
+					cmd: "bash",
+					cmdArgs: "",
+					ext: "zsh",
+					file: "start-server.zsh",
+				});
 			},
 		});
 
@@ -186,9 +184,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		// 	void this.server.close();
 		// }
 		for (const executor of this.executors ?? []) {
-			executor.stop().then((_) => {
-				/* do nothing */
-			});
+			void executor.stop()
 		}
 	}
 
@@ -204,18 +200,30 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 	 * @param ext The file extension of the temporary file. Should correspond to the language of the code. (e.g. py, ...)
 	 * @param file The address of the file which the code originates from
 	 */
-	private runCodeInShell(
-		codeBlockContent: string,
-		outputter: Outputter,
-		button: HTMLButtonElement,
-		cmd: string,
-		cmdArgs: string,
-		ext: string,
-		file: string,
-	) {
+	private async runCodeInShell({
+		codeBlockContent,
+		outputter,
+		cmd,
+		cmdArgs,
+		ext,
+		file,
+	}: {
+		codeBlockContent: string;
+		outputter: Outputter;
+		cmd: string;
+		cmdArgs: string;
+		ext: string;
+		file: string;
+	}) {
 		const executor = this.executors.getExecutorFor(file, true);
 
-		executor.run(codeBlockContent, outputter, cmd, cmdArgs, ext);
+		return await executor.run(
+			codeBlockContent,
+			outputter,
+			cmd,
+			cmdArgs,
+			ext,
+		);
 	}
 
 	getViewInstance(): SlidevPresentationView | null {
@@ -257,7 +265,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 	}
 
 	#getVaultPath() {
-		const adapter = this.app.vault.adapter;
+		const { adapter } = this.app.vault;
 		if (adapter instanceof FileSystemAdapter) {
 			return adapter.getBasePath();
 		}
