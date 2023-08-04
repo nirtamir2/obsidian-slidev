@@ -51,7 +51,7 @@ devDependencies:
     version: 0.0.52(eslint@8.45.0)(typescript@5.1.6)
   obsidian:
     specifier: latest
-    version: 1.3.5(@codemirror/state@6.2.1)(@codemirror/view@6.15.3)
+    version: 1.4.0(@codemirror/state@6.2.1)(@codemirror/view@6.15.3)
   postcss:
     specifier: ^8.4.27
     version: 8.4.27
@@ -6169,8 +6169,8 @@ packages:
       es-abstract: 1.22.1
     dev: true
 
-  /obsidian@1.3.5(@codemirror/state@6.2.1)(@codemirror/view@6.15.3):
-    resolution: {integrity: sha512-2Zg9vlaEZw6fd2AohcdrC1kV+lZcb4a1Ju6GcIwdWaGOWj6l//7wbKD6vVhO2GlfoQRGARYu++eLo7FEc+f6Tw==}
+  /obsidian@1.4.0(@codemirror/state@6.2.1)(@codemirror/view@6.15.3):
+    resolution: {integrity: sha512-fsZMPlxgflGSBSP6P4BjQi5+0MqZl3h6FEDEZ3CNnweNdDw0doyqN3FMO/PGWfuxPT77WicVwUxekuI3e6eCGg==}
     peerDependencies:
       '@codemirror/state': ^6.0.0
       '@codemirror/view': ^6.0.0

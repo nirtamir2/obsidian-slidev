@@ -2,6 +2,8 @@
 import { parse } from "@slidev/parser";
 import type { App, PluginManifest } from "obsidian";
 import { MarkdownView, Plugin, debounce } from "obsidian";
+import { Outputter } from "../obsidian-execute-code/src/Outputter";
+import ExecutorContainer from "./Executor/ExecutorContainer";
 import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
@@ -13,6 +15,8 @@ import {
 
 export default class SlidevPlugin extends Plugin {
 	settings: SlidevPluginSettings = DEFAULT_SETTINGS;
+	executors: ExecutorContainer;
+
 	// server: Awaited<ReturnType<typeof createServer>> | null = null;
 
 	constructor(app: App, manifest: PluginManifest) {
@@ -24,8 +28,11 @@ export default class SlidevPlugin extends Plugin {
 			true,
 		) as unknown as typeof this.saveSettings;
 	}
+
 	override async onload() {
 		await this.loadSettings();
+
+		this.executors = new ExecutorContainer(this);
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SlidevSettingTab(this.app, this));
@@ -49,19 +56,6 @@ export default class SlidevPlugin extends Plugin {
 		// if (view == null) {
 		// 	return;
 		// }
-
-		// TODO: add an option to create server
-		// const options = await resolveOptions(
-		// 	{
-		// 		entry: view.file.path,
-		// 		// userRoot: "../../",
-		// 		inspect: true,
-		// 	},
-		// 	"dev",
-		// 	false,
-		// );
-		// //
-		// this.server = await createServer(options, );
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
@@ -88,6 +82,48 @@ export default class SlidevPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: "start-slidev-presentation-server",
+			name: "Start slidev presentation server",
+			icon: "play",
+			callback: () => {
+				// TODO: make it generic and use the settings for it
+				const codeBlockContent = `source $HOME/.zshrc
+cd Users/nirtamir/dev/slides/introduction-to-solid-js/
+pnpm dlx @slidev/cli slides.md`;
+
+				// TODO: output the code better - maybe in the view
+				const codeBlock = document.createElement("code");
+				codeBlock.style = {
+					background: "red",
+					padding: 20
+				}
+				document.body.appendChild(codeBlock)
+				const outputter = new Outputter(codeBlock, false);
+
+				const button = document.createElement("button");
+				void this.runCodeInShell(
+					codeBlockContent,
+					outputter,
+					button,
+					"bash",
+					"",
+					"zsh",
+					"start-server.zsh",
+				);
+			},
+		});
+
+		// TODO: close server command
+		// this.addCommand({
+		// 	id: "stop-slidev-presentation-server",
+		// 	name: "Stop slidev presentation server",
+		// 	icon: "pause",
+		// 	callback: () => {
+		// 		void this.runCodeInShell("");
+		// 	},
+		// });
+
 		// TODO: use different event for it instead of just click. Maybe keydown too.
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 
@@ -104,9 +140,9 @@ export default class SlidevPlugin extends Plugin {
 			}, 100),
 		);
 
-		if (import.meta.env.DEV) {
-			window.hmr(this);
-		}
+		// if (import.meta.env.DEV) {
+		window.hmr(this);
+		// }
 	}
 
 	async navigateToCurrentSlide() {
@@ -138,6 +174,41 @@ export default class SlidevPlugin extends Plugin {
 		// if (this.server != null) {
 		// 	void this.server.close();
 		// }
+		for (const executor of this.executors ?? []) {
+			executor.stop().then((_) => {
+				/* do nothing */
+			});
+		}
+	}
+
+	/**
+	 * Executes the code with the given command and arguments. The code is written to a temporary file and then executed.
+	 * This is equal to {@link runCode} but the code is executed in a shell. This is necessary for some languages like groovy.
+	 *
+	 * @param codeBlockContent The content of the code block that should be executed.
+	 * @param outputter The {@link Outputter} that should be used to display the output of the code.
+	 * @param button The button that was clicked to execute the code. Is re-enabled after the code execution.
+	 * @param cmd The command that should be used to execute the code. (e.g. python, java, ...)
+	 * @param cmdArgs Additional arguments that should be passed to the command.
+	 * @param ext The file extension of the temporary file. Should correspond to the language of the code. (e.g. py, ...)
+	 * @param file The address of the file which the code originates from
+	 */
+	private runCodeInShell(
+		codeBlockContent: string,
+		outputter: Outputter,
+		button: HTMLButtonElement,
+		cmd: string,
+		cmdArgs: string,
+		ext: string,
+		file: string,
+	) {
+		console.log("main#runCodeInShell()");
+		const executor = this.executors.getExecutorFor(file, true);
+		console.log("main#runCodeInShell()", executor);
+
+		executor
+			.run(codeBlockContent, outputter, cmd, cmdArgs, ext)
+			.then((e) => console.log("finish", e));
 	}
 
 	getViewInstance(): SlidevPresentationView | null {

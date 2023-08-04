@@ -95,6 +95,7 @@ export default defineConfig(async ({ mode }) => {
 					"@lezer/highlight",
 					"@lezer/lr",
 					...builtins,
+					...builtins.map((module) => `node:${module}`),
 				],
 			},
 		},
@@ -130,7 +131,9 @@ const inject = (files: Array<string>): Plugin => {
 					const dir = path.dirname(id);
 					const inject_code = files
 						.map((v) => path.relative(dir, v))
-						.map((p) => path.join("./", path.basename(p, path.extname(p))))
+						.map((p) =>
+							path.join("./", path.basename(p, path.extname(p))),
+						)
 						.map((p) => `import './${p}'`)
 						.join(";");
 					return `

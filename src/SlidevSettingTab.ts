@@ -4,10 +4,12 @@ import type SlidevPlugin from "./main";
 
 export interface SlidevPluginSettings {
 	port: number;
+	wslMode?: boolean
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
+	wslMode: false
 };
 
 function isPortNumber(parsedNumber: number) {

@@ -10,6 +10,7 @@
 	"scripts": {
 		"build": "vite build",
 		"dev": "vite build -w -m development",
+		"es-dev": "node esbuild.config.mjs",
 		"format": "prettier \"**/*\" --write --ignore-unknown",
 		"lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
 		"type-check": "tsc --pretty --noEmit",
