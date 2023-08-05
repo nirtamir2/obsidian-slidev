@@ -153,7 +153,7 @@ export const PresentationView = () => {
 								label="Open presentation view"
 								onClick={() => {
 									window.open(
-										`${serverBaseUrl()}`,
+										`${serverBaseUrl()}${store.currentSlideNumber}`,
 										"noopener=true,noreferrer=true",
 									);
 								}}
@@ -164,7 +164,7 @@ export const PresentationView = () => {
 								label="Open presenter view"
 								onClick={() => {
 									window.open(
-										`${serverBaseUrl()}presenter`,
+										`${serverBaseUrl()}presenter/${store.currentSlideNumber}`,
 										"noopener=true,noreferrer=true",
 									);
 								}}
