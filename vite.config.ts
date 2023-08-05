@@ -39,6 +39,11 @@ export default defineConfig(async ({ mode }) => {
 						src: "manifest.json",
 						dest: ".",
 					},
+					{
+						// If this not work - move it to public folder
+						src: "./slidev-template/*",
+						dest: "slidev-template"
+					}
 				],
 			}),
 			loader({

@@ -94,17 +94,19 @@ export default class SlidevPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				const currentSlideFile =
 					activeFile == null ? "" : activeFile.path;
-				const sourceCommand = `source $HOME/.zshrc`;
-				const packageManagerCommand =
-					this.settings.packageManager === "pnpm"
-						? "pnpm dlx"
-						: this.settings.packageManager === "yarn"
-						? "yarn exec"
-						: "npx";
 
-				const codeBlockContent = `${sourceCommand}
-cd ${vaultPath}
-${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
+				const templatePath = `${vaultPath}/.obsidian/plugins/obsidian-slidev/slidev-template`;
+				const slidePathRelativeToTemplatePath = `../../../../${currentSlideFile}`;
+
+				const codeBlockContent = [
+					// This makes npm usable
+					`source $HOME/.zshrc`,
+					`cd ${templatePath}`,
+					// Just make sure it install the stuff (because I ignore node_modules in git)
+					"npm i",
+					// If you use npm scripts, don't forget to add -- after the npm command:
+					`npm run slidev ${slidePathRelativeToTemplatePath} -- --port ${this.settings.port}`,
+				].join("\n");
 
 				// TODO: output the code better - maybe in the view
 				const codeBlock = document.createElement("code");
@@ -227,13 +229,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 	}) {
 		const executor = this.executors.getExecutorFor(file, true);
 
-		return await executor.run(
-			codeBlockContent,
-			outputter,
-			cmd,
-			cmdArgs,
-			ext,
-		);
+		await executor.run(codeBlockContent, outputter, cmd, cmdArgs, ext);
 	}
 
 	#getViewInstance(): SlidevPresentationView | null {
