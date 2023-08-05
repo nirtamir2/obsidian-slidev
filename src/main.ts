@@ -155,9 +155,9 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 			}, 100),
 		);
 
-		// if (import.meta.env.DEV) {
-		window.hmr(this);
-		// }
+		if (import.meta.env.DEV) {
+			window.hmr(this);
+		}
 	}
 
 	#stopAllExecutions() {
