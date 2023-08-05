@@ -119,8 +119,8 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 				const outputter = new Outputter(codeBlock, false);
 
 				this.#runCodeInShell({
-					codeBlockContent: codeBlockContent,
-					outputter: outputter,
+					codeBlockContent,
+					outputter,
 					cmd: "bash",
 					cmdArgs: "",
 					ext: "zsh",
@@ -130,14 +130,14 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		});
 
 		// TODO: close server command
-		// this.addCommand({
-		// 	id: "stop-slidev-presentation-server",
-		// 	name: "Stop slidev presentation server",
-		// 	icon: "pause",
-		// 	callback: () => {
-		// 		void this.runCodeInShell("");
-		// 	},
-		// });
+		this.addCommand({
+			id: "stop-slidev-presentation-server",
+			name: "Stop slidev presentation server",
+			icon: "pause",
+			callback: () => {
+				this.#stopAllExecutions();
+			},
+		});
 
 		// TODO: use different event for it instead of just click. Maybe keydown too.
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
@@ -158,6 +158,12 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		// if (import.meta.env.DEV) {
 		window.hmr(this);
 		// }
+	}
+
+	#stopAllExecutions() {
+		for (const executor of this.executors ?? []) {
+			void executor.stop();
+		}
 	}
 
 	async #navigateToCurrentSlide() {
@@ -189,9 +195,7 @@ ${packageManagerCommand} @slidev/cli ${currentSlideFile}`.trim();
 		// if (this.server != null) {
 		// 	void this.server.close();
 		// }
-		for (const executor of this.executors ?? []) {
-			void executor.stop();
-		}
+		this.#stopAllExecutions();
 	}
 
 	/**
