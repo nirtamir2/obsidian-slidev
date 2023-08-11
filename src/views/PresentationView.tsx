@@ -259,6 +259,7 @@ export const PresentationView = () => {
 				</div>
 			}
 		>
+			<div class="flex gap-3 items-center">
 			<button
 				type="button"
 				onClick={() => {
@@ -266,7 +267,7 @@ export const PresentationView = () => {
 				}}
 			>
 				Start
-			</button>{" "}
+			</button>
 			<button
 				type="button"
 				onClick={() => {
@@ -285,6 +286,7 @@ export const PresentationView = () => {
 			>
 				Log
 			</button>
+			</div>
 			<Show
 				when={isServerUp()}
 				fallback={
