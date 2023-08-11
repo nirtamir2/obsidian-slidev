@@ -64,7 +64,6 @@ export class SlidevPresentationView extends ItemView {
 				</AppContext.Provider>,
 			);
 			onCleanup(() => {
-				console.log("SlidevPresentationView#onCleanup()",);
 				element.empty();
 			});
 			return dispose;

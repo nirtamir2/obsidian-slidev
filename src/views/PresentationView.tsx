@@ -196,7 +196,6 @@ export const PresentationView = () => {
 
 	function addLogListeners(command: ChildProcessWithoutNullStreams) {
 		command.on("disconnect", () => {
-			console.log("PresentationView#disconnect()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError("disconnect"),
@@ -204,7 +203,6 @@ export const PresentationView = () => {
 		});
 
 		command.on("error", (error) => {
-			console.log("PresentationView#error()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError(error.message),
@@ -212,7 +210,6 @@ export const PresentationView = () => {
 		});
 
 		command.on("close", (code) => {
-			console.log("PresentationView#close()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError(`child process exited with code ${String(code)}`),
@@ -220,7 +217,6 @@ export const PresentationView = () => {
 		});
 
 		command.on("message", (message) => {
-			console.log("PresentationView#message()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createMessage(message),
@@ -228,7 +224,6 @@ export const PresentationView = () => {
 		});
 
 		command.on("exit", (code, signal) => {
-			console.log("PresentationView#exit()");
 			const errorMessage = `child process exited with code ${String(
 				code,
 			)} and signal ${String(signal)}`;
@@ -240,12 +235,10 @@ export const PresentationView = () => {
 		});
 
 		command.stdout.on("data", (data) => {
-			console.log("PresentationView#stdout()", data.toString());
 			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 
 		command.stderr.on("data", (data) => {
-			console.error("PresentationView#stderr()", data.toString());
 			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 	}
