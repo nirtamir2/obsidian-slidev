@@ -2,10 +2,12 @@ import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
 
+type PackageManager = "npm" | "pnpm" | "yarn";
+
 export interface SlidevPluginSettings {
 	port: number;
 	wslMode: boolean;
-	packageManager: "npm" | "pnpm" | "yarn";
+	packageManager: PackageManager;
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
@@ -44,15 +46,17 @@ export class SlidevSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(String(DEFAULT_SETTINGS.port))
 					.setValue(String(this.plugin.settings.port))
-					.onChange(debounce(async (value) => {
-						const parsedNumber = Number(value);
-						if (!isPortNumber(parsedNumber)) {
-							new Notice("Port should be an integer");
-							return;
-						}
-						this.plugin.settings.port = parsedNumber;
-						await this.plugin.saveSettings();
-					}, 750)),
+					.onChange(
+						debounce(async (value) => {
+							const parsedNumber = Number(value);
+							if (!isPortNumber(parsedNumber)) {
+								new Notice("Port should be an integer");
+								return;
+							}
+							this.plugin.settings.port = parsedNumber;
+							await this.plugin.saveSettings();
+						}, 750),
+					),
 			);
 
 		new Setting(containerEl)
@@ -77,7 +81,8 @@ export class SlidevSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.packageManager)
 					.onChange(
 						debounce(async (value) => {
-							this.plugin.settings.packageManager = value;
+							this.plugin.settings.packageManager =
+								value as PackageManager;
 							await this.plugin.saveSettings();
 						}, 750),
 					);
