@@ -13,15 +13,18 @@ import type { LogMessage } from "./PresentationView";
 function CommandLogView(props: { messages: Array<LogMessage> }) {
 	const [listRef, setListRef] = createSignal<HTMLUListElement | null>(null);
 
-	createEffect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		props.messages;
-
+	function scrollToListEnd() {
 		// Scroll to list's end
 		const list = listRef();
 		if (list != null) {
 			list.scrollTop = list.scrollHeight;
 		}
+	}
+
+	createEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		props.messages;
+		scrollToListEnd();
 	});
 
 	return (
