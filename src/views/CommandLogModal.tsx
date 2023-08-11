@@ -2,9 +2,8 @@ import type { App } from "obsidian";
 import { Modal } from "obsidian";
 import { createRoot, onCleanup } from "solid-js";
 import { insert } from "solid-js/web";
-import { CommandLogModalView } from "./CommandLogModalView";
+import { CommandLog } from "./CommandLog";
 import type { LogMessage } from "./PresentationView";
-
 
 export class CommandLogModal extends Modal {
 	messages: Array<LogMessage> = [];
@@ -18,7 +17,13 @@ export class CommandLogModal extends Modal {
 	override async onOpen() {
 		this.#dispose = createRoot((dispose) => {
 			const element = this.contentEl;
-			insert(element, <CommandLogModalView messages={this.messages} />);
+			insert(
+				element,
+				<div>
+					<h3>Log</h3>
+					<CommandLog messages={this.messages} />
+				</div>,
+			);
 			onCleanup(() => {
 				element.empty();
 			});

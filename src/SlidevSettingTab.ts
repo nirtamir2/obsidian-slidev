@@ -5,11 +5,13 @@ import type SlidevPlugin from "./main";
 export interface SlidevPluginSettings {
 	port: number;
 	initialScript: string;
+	isDebug: boolean;
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
 	initialScript: "source $HOME/.profile",
+	isDebug: false,
 };
 
 function isPortNumber(parsedNumber: number) {
@@ -68,6 +70,18 @@ export class SlidevSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						}, 750),
 					),
+			);
+
+		new Setting(containerEl)
+			.setName("Debug mode")
+			.setDesc("Should show debug mode")
+			.addToggle((value) =>
+				value.setValue(this.plugin.settings.isDebug).onChange(
+					debounce(async (value) => {
+						this.plugin.settings.isDebug = value;
+						await this.plugin.saveSettings();
+					}, 750),
+				),
 			);
 	}
 }

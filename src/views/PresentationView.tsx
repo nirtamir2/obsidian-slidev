@@ -5,10 +5,12 @@ import {
 	createEffect,
 	createResource,
 	onCleanup,
+	onMount,
 	useContext,
 } from "solid-js";
 import { createStore } from "solid-js/store";
 import "../styles.css";
+import { CommandLog } from "./CommandLog";
 import { CommandLogModal } from "./CommandLogModal";
 import { SlidevStoreContext } from "./SlidevStoreContext";
 import { createStartServerCommand } from "./createStartServerCommand";
@@ -41,6 +43,7 @@ export interface LogMessage {
 	value: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createMessage(data: any) {
 	return {
 		type: "message" as const,
@@ -51,6 +54,116 @@ function createMessage(data: any) {
 
 function createError(value: string) {
 	return { type: "error" as const, value };
+}
+
+function SlidevDebugHeader(props: {
+	onStartServer: () => void;
+	onStopServer: () => void;
+	onOpenLog: () => void;
+}) {
+	return (
+		<div class="sticky left-0 top-0 flex w-full items-center gap-3">
+			<button
+				type="button"
+				onClick={() => {
+					props.onStartServer();
+				}}
+			>
+				Start
+			</button>
+			<button
+				type="button"
+				onClick={() => {
+					props.onStopServer();
+				}}
+			>
+				Stop
+			</button>
+			<button
+				type="button"
+				onClick={() => {
+					props.onOpenLog();
+				}}
+			>
+				Log
+			</button>
+		</div>
+	);
+}
+
+function SlidevFallback(props: {
+	commandLogMessages: Array<LogMessage>;
+	slidevUrl: string;
+	onStartServer: () => void;
+	onShowLog: () => void;
+}) {
+	return (
+		<div class="flex h-full items-center justify-center">
+			<div class="flex flex-col items-center gap-4">
+				<div class="text-xl text-red-400">Slidev server is down</div>
+				<div>
+					No server found at{" "}
+					{/* eslint-disable-next-line react/forbid-elements */}
+					<a href={props.slidevUrl}>{props.slidevUrl}</a>
+				</div>
+				<div>
+					<button
+						type="button"
+						onClick={() => {
+							props.onStartServer();
+						}}
+					>
+						Start slidev server
+					</button>
+				</div>
+				<CommandLog messages={props.commandLogMessages} />
+			</div>
+		</div>
+	);
+}
+
+function SlidevPresentation(props: {
+	title: string;
+	onOpenSlideUrl: () => void;
+	onOpenSlidevPresenterUrl: () => void;
+	src: string;
+}) {
+	return (
+		<div class="flex h-full flex-col">
+			<h4 class="flex items-center gap-2">
+				<div class="flex-1">{props.title}</div>
+				<div class="flex items-center gap-2">
+					<RibbonButton
+						label="Open presentation view"
+						onClick={props.onOpenSlideUrl}
+					>
+						<MonitorPlayIcon />
+					</RibbonButton>
+					<RibbonButton
+						label="Open presenter view"
+						onClick={props.onOpenSlidevPresenterUrl}
+					>
+						<GanttChartSquareIcon />
+					</RibbonButton>
+				</div>
+			</h4>
+
+			{/* eslint-disable-next-line react/iframe-missing-sandbox */}
+			<iframe
+				sandbox="allow-scripts allow-same-origin"
+				title="Slidev presentation"
+				class="h-full w-full"
+				id="iframe"
+				src={props.src}
+			/>
+		</div>
+	);
+}
+
+function killCommand() {
+	if (command != null) {
+		command.kill("SIGINT");
+	}
 }
 
 export const PresentationView = () => {
@@ -75,12 +188,6 @@ export const PresentationView = () => {
 		void refetch();
 	});
 
-	onCleanup(() => {
-		if (command != null) {
-			command.kill("SIGINT");
-		}
-	});
-
 	const commandLogModal = new CommandLogModal(app, commandLogMessages);
 
 	const iframeSrcUrl = () => {
@@ -89,6 +196,7 @@ export const PresentationView = () => {
 
 	function addLogListeners(command: ChildProcessWithoutNullStreams) {
 		command.on("disconnect", () => {
+			console.log("PresentationView#disconnect()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError("disconnect"),
@@ -96,6 +204,7 @@ export const PresentationView = () => {
 		});
 
 		command.on("error", (error) => {
+			console.log("PresentationView#error()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError(error.message),
@@ -103,6 +212,7 @@ export const PresentationView = () => {
 		});
 
 		command.on("close", (code) => {
+			console.log("PresentationView#close()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createError(`child process exited with code ${String(code)}`),
@@ -110,6 +220,7 @@ export const PresentationView = () => {
 		});
 
 		command.on("message", (message) => {
+			console.log("PresentationView#message()");
 			setCommandLogMessages([
 				...commandLogMessages,
 				createMessage(message),
@@ -117,6 +228,7 @@ export const PresentationView = () => {
 		});
 
 		command.on("exit", (code, signal) => {
+			console.log("PresentationView#exit()");
 			const errorMessage = `child process exited with code ${String(
 				code,
 			)} and signal ${String(signal)}`;
@@ -128,22 +240,15 @@ export const PresentationView = () => {
 		});
 
 		command.stdout.on("data", (data) => {
+			console.log("PresentationView#stdout()", data.toString());
 			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 
 		command.stderr.on("data", (data) => {
+			console.error("PresentationView#stderr()", data.toString());
 			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 	}
-
-	createEffect(() => {
-		onCleanup(() => {
-			console.log("onCleanup");
-			if (command != null) {
-				command.kill("SIGINT");
-			}
-		});
-	});
 
 	function startSlidevServer() {
 		if (command != null) {
@@ -154,11 +259,47 @@ export const PresentationView = () => {
 
 		addLogListeners(command);
 
+		// Arbitrary wait to the server to start
+		setTimeout(() => {
+			void refetch();
+		}, 3000);
+
 		process.on("exit", () => {
-			if (command != null) {
-				command.kill("SIGINT");
-			}
+			killCommand();
 		});
+	}
+
+	onMount(() => {
+		startSlidevServer();
+	});
+
+	onCleanup(() => {
+		killCommand();
+	});
+
+	function handleOpenLog() {
+		commandLogModal.open();
+	}
+
+	function handleStopServer() {
+		if (command != null) {
+			command.kill();
+			void refetch();
+		}
+	}
+
+	function handleOpenSlideUrl() {
+		window.open(
+			`${serverBaseUrl()}${store.currentSlideNumber}`,
+			"noopener=true,noreferrer=true",
+		);
+	}
+
+	function handleOpenSlidePresenterUrl() {
+		window.open(
+			`${serverBaseUrl()}presenter/${store.currentSlideNumber}`,
+			"noopener=true,noreferrer=true",
+		);
 	}
 
 	return (
@@ -170,101 +311,32 @@ export const PresentationView = () => {
 			}
 		>
 			<div class="flex h-full flex-col">
-				<div class="sticky left-0 top-0 flex w-full items-center gap-3">
-					<button
-						type="button"
-						onClick={() => {
-							startSlidevServer();
-						}}
-					>
-						Start
-					</button>
-					<button
-						type="button"
-						onClick={() => {
-							if (command != null) {
-								command.kill();
-							}
-						}}
-					>
-						Stop
-					</button>
-					<button
-						type="button"
-						onClick={() => {
-							commandLogModal.open();
-						}}
-					>
-						Log
-					</button>
-				</div>
+				<Show when={config.isDebug}>
+					<SlidevDebugHeader
+						onStartServer={startSlidevServer}
+						onStopServer={handleStopServer}
+						onOpenLog={handleOpenLog}
+					/>
+				</Show>
 				<Show
 					when={isServerUp()}
 					fallback={
-						<div class="flex h-full items-center justify-center">
-							<div class="flex flex-col items-center gap-4">
-								<div class="text-xl text-red-400">
-									Slidev server is down
-								</div>
-								<div>
-									No server found at{" "}
-									{/* eslint-disable-next-line react/forbid-elements */}
-									<a href={serverBaseUrl()}>
-										{serverBaseUrl()}
-									</a>
-								</div>
-								<div>
-									Try running <code>slidev slides.md</code>
-								</div>
-							</div>
-						</div>
+						<SlidevFallback
+							commandLogMessages={commandLogMessages}
+							slidevUrl={serverBaseUrl()}
+							onStartServer={startSlidevServer}
+							onShowLog={handleOpenLog}
+						/>
 					}
 				>
-					<div class="flex h-full flex-col">
-						<h4 class="flex items-center gap-2">
-							<div class="flex-1">
-								{app.vault.getName()} #
-								{store.currentSlideNumber}
-							</div>
-							<div class="flex items-center gap-2">
-								<RibbonButton
-									label="Open presentation view"
-									onClick={() => {
-										window.open(
-											`${serverBaseUrl()}${
-												store.currentSlideNumber
-											}`,
-											"noopener=true,noreferrer=true",
-										);
-									}}
-								>
-									<MonitorPlayIcon />
-								</RibbonButton>
-								<RibbonButton
-									label="Open presenter view"
-									onClick={() => {
-										window.open(
-											`${serverBaseUrl()}presenter/${
-												store.currentSlideNumber
-											}`,
-											"noopener=true,noreferrer=true",
-										);
-									}}
-								>
-									<GanttChartSquareIcon />
-								</RibbonButton>
-							</div>
-						</h4>
-
-						{/* eslint-disable-next-line react/iframe-missing-sandbox */}
-						<iframe
-							sandbox="allow-scripts allow-same-origin"
-							title="Slidev presentation"
-							class="h-full w-full"
-							id="iframe"
-							src={iframeSrcUrl()}
-						/>
-					</div>
+					<SlidevPresentation
+						title={`${app.vault.getName()} #${
+							store.currentSlideNumber
+						}`}
+						src={iframeSrcUrl()}
+						onOpenSlideUrl={handleOpenSlideUrl}
+						onOpenSlidevPresenterUrl={handleOpenSlidePresenterUrl}
+					/>
 				</Show>
 			</div>
 		</Suspense>
