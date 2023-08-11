@@ -126,9 +126,7 @@ export default class SlidevPlugin extends Plugin {
 	}
 
 	override onunload() {
-		// if (this.server != null) {
-		// 	void this.server.close();
-		// }
+		this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
 	}
 
 	#getViewInstance(): SlidevPresentationView | null {
