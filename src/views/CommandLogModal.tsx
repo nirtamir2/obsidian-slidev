@@ -16,6 +16,8 @@ function CommandLogView(props: { messages: Array<LogMessage> }) {
 	createEffect(() => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		props.messages;
+
+		// Scroll to list's end
 		const list = listRef();
 		if (list != null) {
 			list.scrollTop = list.scrollHeight;
