@@ -4,6 +4,18 @@ This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://
 
 [![screencast](./docs/screenshot.png)](./docs/screencast.mp4)
 
+## Development
+
+`git clone https://github.com/nirtamir2/obsidian-slidev.git`
+Change `.env` file content to
+
+```dotenv
+OUT_DIR="<relative-path-to-your-vault>/.obsidian/plugins/obsidian-slidev"
+```
+
+run `pnpm i` and `pnpm dev`. Then you can enable the plugin in your vault (also you can change the debug setting to true).
+You can also change the settings plugin `initialScript` to wherever you want that will load node.js in your PATH. For me it's `source ~/.profile`.
+
 ## Credits
 
 -   [Advances slides](https://github.com/MSzturc/obsidian-advanced-slides)
@@ -13,19 +25,4 @@ This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://
 -   Vite Starters
     -   with solid [obsidian-enhancing-export](https://github.com/mokeyish/obsidian-enhancing-export)
     -   with svelte [obsidian-svelte-plugin](https://github.com/emilio-toledo/obsidian-svelte-plugin)
-- [obsidian-execute-code](https://github.com/twibiral/obsidian-execute-code) - allows executing code in bash.
-
-## Instructions
-Add your zsh/bash to settings. You should have node.js installed. You can write `source ./zshrc` if you use zsh. The plugin will install slidev and execute it. I try in obsidian-exeute-code the command:
-
-
-```bash
-# This gives me access to node.js & pnpm
-source $HOME/.zshrc 
-
-cd Users/nirtamir/dev/slides/introduction-to-solid-js/
-pnpm dlx @slidev/cli slides.md
-```
-With the bash settings of shell path `/opt/homebrew/bin/zsh` (`which zsh` output)
-
----
+-   [obsidian-execute-code](https://github.com/twibiral/obsidian-execute-code) - allows executing code in bash.
