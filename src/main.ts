@@ -100,7 +100,7 @@ export default class SlidevPlugin extends Plugin {
 
 				const codeBlockContent = [
 					// This makes npm usable
-					`source $HOME/.zshrc`,
+					`source $HOME/.profile`,
 					`cd ${templatePath}`,
 					// Just make sure it install the stuff (because I ignore node_modules in git)
 					"npm i",
@@ -275,7 +275,7 @@ export default class SlidevPlugin extends Plugin {
 		if (adapter instanceof FileSystemAdapter) {
 			return adapter.getBasePath();
 		}
-		return `Users/nirtamir/dev/slides/introduction-to-solid-js/`;
+		throw new Error("No vault path");
 	}
 
 	async saveSettings() {
