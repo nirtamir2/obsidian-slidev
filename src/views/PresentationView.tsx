@@ -132,6 +132,7 @@ export const PresentationView = () => {
 	const iframeSrcUrl = () => {
 		return `${serverBaseUrl()}${store.currentSlideNumber}?embedded=true`;
 	};
+
 	function getVaultPath() {
 		const { adapter } = app.vault;
 		if (adapter instanceof FileSystemAdapter) {
@@ -174,7 +175,10 @@ export const PresentationView = () => {
 		});
 
 		command.on("disconnect", () => {
-			setCommandLogMessages([]);
+			setCommandLogMessages([
+				...commandLogMessages,
+				{ type: "error", value: "disconnect" },
+			]);
 			console.log("disconnect");
 		});
 
@@ -187,7 +191,13 @@ export const PresentationView = () => {
 		});
 
 		command.on("close", (code) => {
-			setCommandLogMessages([]);
+			setCommandLogMessages([
+				...commandLogMessages,
+				{
+					type: "error",
+					value: `child process exited with code ${String(code)}`,
+				},
+			]);
 			console.log(`child process exited with code ${String(code)}`);
 		});
 
@@ -201,10 +211,19 @@ export const PresentationView = () => {
 		});
 
 		command.on("exit", (code, signal) => {
-			setCommandLogMessages([]);
+			setCommandLogMessages([
+				...commandLogMessages,
+				{
+					type: "error",
+					value: `child process exited with code ${String(
+						code,
+					)} and signal ${String(signal)}`,
+				},
+			]);
 			console.log(
-				"child process exited with " +
-					`code ${String(code)} and signal ${String(signal)}`,
+				`child process exited with code ${String(
+					code,
+				)} and signal ${String(signal)}`,
 			);
 		});
 
@@ -259,33 +278,33 @@ export const PresentationView = () => {
 				</div>
 			}
 		>
-			<div class="flex gap-3 items-center">
-			<button
-				type="button"
-				onClick={() => {
-					startServer();
-				}}
-			>
-				Start
-			</button>
-			<button
-				type="button"
-				onClick={() => {
-					if (command != null) {
-						command.kill();
-					}
-				}}
-			>
-				Stop
-			</button>
-			<button
-				type="button"
-				onClick={() => {
-					commandLogModal.open();
-				}}
-			>
-				Log
-			</button>
+			<div class="flex items-center gap-3">
+				<button
+					type="button"
+					onClick={() => {
+						startServer();
+					}}
+				>
+					Start
+				</button>
+				<button
+					type="button"
+					onClick={() => {
+						if (command != null) {
+							command.kill();
+						}
+					}}
+				>
+					Stop
+				</button>
+				<button
+					type="button"
+					onClick={() => {
+						commandLogModal.open();
+					}}
+				>
+					Log
+				</button>
 			</div>
 			<Show
 				when={isServerUp()}

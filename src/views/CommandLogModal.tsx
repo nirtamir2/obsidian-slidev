@@ -1,8 +1,54 @@
 import type { App } from "obsidian";
 import { Modal } from "obsidian";
-import { For, createRoot, onCleanup } from "solid-js";
+import {
+	For,
+	createEffect,
+	createRoot,
+	createSignal,
+	onCleanup,
+} from "solid-js";
 import { insert } from "solid-js/web";
 import type { LogMessage } from "./PresentationView";
+
+function CommandLogView(props: { messages: Array<LogMessage> }) {
+	const [listRef, setListRef] = createSignal<HTMLUListElement | null>(null);
+
+	createEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		props.messages;
+		const list = listRef();
+		if (list != null) {
+			list.scrollTop = list.scrollHeight;
+		}
+	});
+
+	return (
+		<div>
+			<h3>Log</h3>
+			<ul
+				ref={setListRef}
+				class="max-h-96 overflow-auto rounded border p-0"
+			>
+				<For each={props.messages} fallback={<div>Log is empty</div>}>
+					{(message) => {
+						const isError = message.type === "error";
+						return (
+							<li
+								classList={{
+									"list-none whitespace-pre-wrap font-mono":
+										true,
+									"text-red-500": isError,
+								}}
+							>
+								{message.value}
+							</li>
+						);
+					}}
+				</For>
+			</ul>
+		</div>
+	);
+}
 
 export class CommandLogModal extends Modal {
 	messages: Array<LogMessage> = [];
@@ -16,33 +62,7 @@ export class CommandLogModal extends Modal {
 	override async onOpen() {
 		this.#dispose = createRoot((dispose) => {
 			const element = this.contentEl;
-			insert(
-				element,
-				<div>
-					<h3>Log</h3>
-					<ul class="max-h-96 overflow-auto rounded border p-0">
-						<For
-							each={this.messages}
-							fallback={<div>Log is empty</div>}
-						>
-							{(message) => {
-								const isError = message.type === "error";
-								return (
-									<li
-										classList={{
-											"list-none whitespace-pre-wrap font-mono":
-												true,
-											"text-red": isError,
-										}}
-									>
-										{message.value}
-									</li>
-								);
-							}}
-						</For>
-					</ul>
-				</div>,
-			);
+			insert(element, <CommandLogView messages={this.messages} />);
 			onCleanup(() => {
 				element.empty();
 			});
