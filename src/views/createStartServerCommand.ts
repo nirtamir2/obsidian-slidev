@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import path from "node:path";
 import type { App, Vault } from "obsidian";
 import { FileSystemAdapter } from "obsidian";
 import type { SlidevPluginSettings } from "../SlidevSettingTab";
@@ -22,13 +23,26 @@ export function createStartServerCommand({
 
 	const activeFile = app.workspace.getActiveFile();
 	const currentSlideFile = activeFile == null ? "" : activeFile.path;
+	const templatePath = path.join(
+		vaultPath,
+		".obsidian",
+		"plugins",
+		"obsidian-slidev",
+		"slidev-template",
+	);
 
-	const templatePath = `${vaultPath}/.obsidian/plugins/obsidian-slidev/slidev-template`;
-	const slidePathRelativeToTemplatePath = `../../../../${currentSlideFile}`;
+	const slidePathRelativeToTemplatePath = path.join(
+		templatePath,
+		"..",
+		"..",
+		"..",
+		"..",
+		currentSlideFile,
+	);
 
 	const codeBlockContent = [
 		// This makes npm usable
-		`source $HOME/.profile`,
+		config.initialScript,
 		`cd ${templatePath}`,
 		// Just make sure it install the stuff (because I ignore node_modules in git)
 		"npm i",

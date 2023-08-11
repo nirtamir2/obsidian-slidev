@@ -2,18 +2,14 @@ import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
 
-type PackageManager = "npm" | "pnpm" | "yarn";
-
 export interface SlidevPluginSettings {
 	port: number;
-	wslMode: boolean;
-	packageManager: PackageManager;
+	initialScript: string;
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
-	wslMode: false,
-	packageManager: "npm",
+	initialScript: "source $HOME/.profile",
 };
 
 function isPortNumber(parsedNumber: number) {
@@ -60,32 +56,18 @@ export class SlidevSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("wslMode (Windows only)")
-			.setDesc("Should use WSL")
-			.addToggle((value) =>
-				value.setValue(this.plugin.settings.wslMode).onChange(
-					debounce(async (value) => {
-						this.plugin.settings.wslMode = value;
-						await this.plugin.saveSettings();
-					}, 750),
-				),
-			);
-
-		new Setting(containerEl)
-			.setName("Package manager")
-			.setDesc("Which package manager to use with slidev")
-			.addDropdown((cb) => {
-				cb.addOption("npm", "npm")
-					.addOption("yarn", "yarn")
-					.addOption("pnpm", "pnpm")
-					.setValue(this.plugin.settings.packageManager)
+			.setName("Initial Script")
+			.setDesc("The script to load Node.js to PATH")
+			.addText((text) =>
+				text
+					.setPlaceholder(String(DEFAULT_SETTINGS.initialScript))
+					.setValue(String(this.plugin.settings.initialScript))
 					.onChange(
 						debounce(async (value) => {
-							this.plugin.settings.packageManager =
-								value as PackageManager;
+							this.plugin.settings.initialScript = value;
 							await this.plugin.saveSettings();
 						}, 750),
-					);
-			});
+					),
+			);
 	}
 }

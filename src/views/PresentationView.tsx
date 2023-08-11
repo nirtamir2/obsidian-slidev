@@ -136,6 +136,15 @@ export const PresentationView = () => {
 		});
 	}
 
+	createEffect(() => {
+		onCleanup(() => {
+			console.log("onCleanup");
+			if (command != null) {
+				command.kill("SIGINT");
+			}Ω
+		});
+	});
+
 	function startSlidevServer() {
 		if (command != null) {
 			command.kill("SIGINT");
@@ -160,99 +169,104 @@ export const PresentationView = () => {
 				</div>
 			}
 		>
-			<div class="flex items-center gap-3">
-				<button
-					type="button"
-					onClick={() => {
-						startSlidevServer();
-					}}
-				>
-					Start
-				</button>
-				<button
-					type="button"
-					onClick={() => {
-						if (command != null) {
-							command.kill();
-						}
-					}}
-				>
-					Stop
-				</button>
-				<button
-					type="button"
-					onClick={() => {
-						commandLogModal.open();
-					}}
-				>
-					Log
-				</button>
-			</div>
-			<Show
-				when={isServerUp()}
-				fallback={
-					<div class="flex h-full items-center justify-center">
-						<div class="flex flex-col items-center gap-4">
-							<div class="text-xl text-red-400">
-								Slidev server is down
-							</div>
-							<div>
-								No server found at{" "}
-								{/* eslint-disable-next-line react/forbid-elements */}
-								<a href={serverBaseUrl()}>{serverBaseUrl()}</a>
-							</div>
-							<div>
-								Try running <code>slidev slides.md</code>
-							</div>
-						</div>
-					</div>
-				}
-			>
-				<div class="flex h-full flex-col">
-					<h4 class="flex items-center gap-2">
-						<div class="flex-1">
-							{app.vault.getName()} #{store.currentSlideNumber}
-						</div>
-						<div class="flex items-center gap-2">
-							<RibbonButton
-								label="Open presentation view"
-								onClick={() => {
-									window.open(
-										`${serverBaseUrl()}${
-											store.currentSlideNumber
-										}`,
-										"noopener=true,noreferrer=true",
-									);
-								}}
-							>
-								<MonitorPlayIcon />
-							</RibbonButton>
-							<RibbonButton
-								label="Open presenter view"
-								onClick={() => {
-									window.open(
-										`${serverBaseUrl()}presenter/${
-											store.currentSlideNumber
-										}`,
-										"noopener=true,noreferrer=true",
-									);
-								}}
-							>
-								<GanttChartSquareIcon />
-							</RibbonButton>
-						</div>
-					</h4>
-
-					{/* eslint-disable-next-line react/iframe-missing-sandbox */}
-					<iframe
-						sandbox="allow-scripts allow-same-origin"
-						title="Slidev presentation"
-						class="h-full w-full"
-						id="iframe"
-						src={iframeSrcUrl()}
-					/>
+			<div class="flex h-full flex-col">
+				<div class="sticky left-0 top-0 flex w-full items-center gap-3">
+					<button
+						type="button"
+						onClick={() => {
+							startSlidevServer();
+						}}
+					>
+						Start
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							if (command != null) {
+								command.kill();
+							}
+						}}
+					>
+						Stop
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							commandLogModal.open();
+						}}
+					>
+						Log
+					</button>
 				</div>
-			</Show>
+				<Show
+					when={isServerUp()}
+					fallback={
+						<div class="flex h-full items-center justify-center">
+							<div class="flex flex-col items-center gap-4">
+								<div class="text-xl text-red-400">
+									Slidev server is down
+								</div>
+								<div>
+									No server found at{" "}
+									{/* eslint-disable-next-line react/forbid-elements */}
+									<a href={serverBaseUrl()}>
+										{serverBaseUrl()}
+									</a>
+								</div>
+								<div>
+									Try running <code>slidev slides.md</code>
+								</div>
+							</div>
+						</div>
+					}
+				>
+					<div class="flex h-full flex-col">
+						<h4 class="flex items-center gap-2">
+							<div class="flex-1">
+								{app.vault.getName()} #
+								{store.currentSlideNumber}
+							</div>
+							<div class="flex items-center gap-2">
+								<RibbonButton
+									label="Open presentation view"
+									onClick={() => {
+										window.open(
+											`${serverBaseUrl()}${
+												store.currentSlideNumber
+											}`,
+											"noopener=true,noreferrer=true",
+										);
+									}}
+								>
+									<MonitorPlayIcon />
+								</RibbonButton>
+								<RibbonButton
+									label="Open presenter view"
+									onClick={() => {
+										window.open(
+											`${serverBaseUrl()}presenter/${
+												store.currentSlideNumber
+											}`,
+											"noopener=true,noreferrer=true",
+										);
+									}}
+								>
+									<GanttChartSquareIcon />
+								</RibbonButton>
+							</div>
+						</h4>
+
+						{/* eslint-disable-next-line react/iframe-missing-sandbox */}
+						<iframe
+							sandbox="allow-scripts allow-same-origin"
+							title="Slidev presentation"
+							class="h-full w-full"
+							id="iframe"
+							src={iframeSrcUrl()}
+						/>
+					</div>
+				</Show>
+			</div>
 		</Suspense>
 	);
 };
