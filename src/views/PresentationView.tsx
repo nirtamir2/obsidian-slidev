@@ -1,7 +1,4 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import { spawn } from "node:child_process";
-import { FileSystemAdapter } from "obsidian";
-import type { JSXElement } from "solid-js";
 import {
 	Show,
 	Suspense,
@@ -14,6 +11,10 @@ import { createStore } from "solid-js/store";
 import "../styles.css";
 import { CommandLogModal } from "./CommandLogModal";
 import { SlidevStoreContext } from "./SlidevStoreContext";
+import { createStartServerCommand } from "./createStartServerCommand";
+import { GanttChartSquareIcon } from "./icons/GanttChartSquareIcon";
+import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
+import { RibbonButton } from "./icons/RibbonButton";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
@@ -33,78 +34,25 @@ async function fetchIsServerUp(serverBaseUrl: string): Promise<boolean> {
 	}
 }
 
-function RibbonButton(props: {
-	onClick: () => void;
-	label: string;
-	children: JSXElement;
-}) {
-	return (
-		<button
-			type="button"
-			class="clickable-icon side-dock-ribbon-action slidev-plugin-ribbon-class"
-			aria-label={props.label}
-			data-tooltip-position="top"
-			// eslint-disable-next-line jsx-a11y/aria-props
-			aria-label-delay="300"
-			onClick={() => {
-				props.onClick();
-			}}
-		>
-			{props.children}
-		</button>
-	);
-}
-
-function MonitorPlayIcon() {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="lucide lucide-monitor-play"
-		>
-			<path d="m10 7 5 3-5 3Z" />
-			<rect width="20" height="14" x="2" y="3" rx="2" />
-			<path d="M12 17v4" />
-			<path d="M8 21h8" />
-		</svg>
-	);
-}
-
-function GanttChartSquareIcon() {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="lucide lucide-gantt-chart-square"
-		>
-			<rect width="18" height="18" x="3" y="3" rx="2" />
-			<path d="M9 8h7" />
-			<path d="M8 12h6" />
-			<path d="M11 16h5" />
-		</svg>
-	);
-}
-
 let command: ChildProcessWithoutNullStreams | null = null;
 
 export interface LogMessage {
 	type: "error" | "message";
 	value: string;
 }
+
+function createMessage(data: any) {
+	return {
+		type: "message" as const,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+		value: String(data.toString()),
+	};
+}
+
+function createError(value: string) {
+	return { type: "error" as const, value };
+}
+
 export const PresentationView = () => {
 	const app = useApp();
 	const config = useSettings();
@@ -113,8 +61,6 @@ export const PresentationView = () => {
 	const [commandLogMessages, setCommandLogMessages] = createStore<
 		Array<LogMessage>
 	>([]);
-
-	const commandLogModal = new CommandLogModal(app, commandLogMessages);
 
 	const serverBaseUrl = () => `http://${localhost()}:${config.port}/`;
 
@@ -129,146 +75,82 @@ export const PresentationView = () => {
 		void refetch();
 	});
 
+	onCleanup(() => {
+		if (command != null) {
+			command.kill("SIGINT");
+		}
+	});
+
+	const commandLogModal = new CommandLogModal(app, commandLogMessages);
+
 	const iframeSrcUrl = () => {
 		return `${serverBaseUrl()}${store.currentSlideNumber}?embedded=true`;
 	};
 
-	function getVaultPath() {
-		const { adapter } = app.vault;
-		if (adapter instanceof FileSystemAdapter) {
-			return adapter.getBasePath();
-		}
-		throw new Error("No vault path");
-	}
-
-	function startServer() {
-		// TODO: make it generic and use the settings for it
-
-		const vaultPath = getVaultPath();
-
-		const activeFile = app.workspace.getActiveFile();
-		const currentSlideFile = activeFile == null ? "" : activeFile.path;
-
-		const templatePath = `${vaultPath}/.obsidian/plugins/obsidian-slidev/slidev-template`;
-		const slidePathRelativeToTemplatePath = `../../../../${currentSlideFile}`;
-
-		const codeBlockContent = [
-			// This makes npm usable
-			`source $HOME/.profile`,
-			`cd ${templatePath}`,
-			// Just make sure it install the stuff (because I ignore node_modules in git)
-			"npm i",
-			// If you use npm scripts, don't forget to add -- after the npm command:
-			`npm run slidev ${slidePathRelativeToTemplatePath} -- --port ${config.port}`,
-		].join("\n");
-
-		console.log("PresentationView#startServer()");
-
-		if (command != null) {
-			command.kill("SIGINT");
-		}
-
-		command = spawn(codeBlockContent, [], {
-			env: process.env,
-			shell: true,
-			cwd: templatePath,
-		});
-
+	function addLogListeners(command: ChildProcessWithoutNullStreams) {
 		command.on("disconnect", () => {
 			setCommandLogMessages([
 				...commandLogMessages,
-				{ type: "error", value: "disconnect" },
+				createError("disconnect"),
 			]);
-			console.log("disconnect");
 		});
 
 		command.on("error", (error) => {
 			setCommandLogMessages([
 				...commandLogMessages,
-				{ type: "error", value: error.message },
+				createError(error.message),
 			]);
-			console.error({ error });
 		});
 
 		command.on("close", (code) => {
 			setCommandLogMessages([
 				...commandLogMessages,
-				{
-					type: "error",
-					value: `child process exited with code ${String(code)}`,
-				},
+				createError(`child process exited with code ${String(code)}`),
 			]);
-			console.log(`child process exited with code ${String(code)}`);
 		});
 
 		command.on("message", (message) => {
 			setCommandLogMessages([
 				...commandLogMessages,
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				{ type: "message", value: message.toString() },
+				createMessage(message),
 			]);
-			console.log("message", message);
 		});
 
 		command.on("exit", (code, signal) => {
+			const errorMessage = `child process exited with code ${String(
+				code,
+			)} and signal ${String(signal)}`;
+
 			setCommandLogMessages([
 				...commandLogMessages,
-				{
-					type: "error",
-					value: `child process exited with code ${String(
-						code,
-					)} and signal ${String(signal)}`,
-				},
+				createError(errorMessage),
 			]);
-			console.log(
-				`child process exited with code ${String(
-					code,
-				)} and signal ${String(signal)}`,
-			);
 		});
 
 		command.stdout.on("data", (data) => {
-			setCommandLogMessages([
-				...commandLogMessages,
-				{
-					type: "message",
-
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-					value: String(data.toString()),
-				},
-			]);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-			console.log(`stdout: ${String(data.toString())}`);
+			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 
 		command.stderr.on("data", (data) => {
-			setCommandLogMessages([
-				...commandLogMessages,
-				{
-					type: "message",
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-					value: String(data.toString()),
-				},
-			]);
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-			console.error(`stderr: ${String(data.toString())}`);
-		});
-
-		process.on("exit", () => {
-			console.log("PresentationView#exit()");
-			if (command != null) {
-				command.kill();
-			}
+			setCommandLogMessages([...commandLogMessages, createMessage(data)]);
 		});
 	}
 
-	onCleanup(() => {
+	function startSlidevServer() {
 		if (command != null) {
-			console.log("PresentationView#onCleanup()");
 			command.kill("SIGINT");
 		}
-	});
+
+		command = createStartServerCommand({ app, config });
+
+		addLogListeners(command);
+
+		process.on("exit", () => {
+			if (command != null) {
+				command.kill("SIGINT");
+			}
+		});
+	}
 
 	return (
 		<Suspense
@@ -282,7 +164,7 @@ export const PresentationView = () => {
 				<button
 					type="button"
 					onClick={() => {
-						startServer();
+						startSlidevServer();
 					}}
 				>
 					Start
