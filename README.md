@@ -15,6 +15,9 @@ OUT_DIR="<relative-path-to-your-vault>/.obsidian/plugins/obsidian-slidev"
 
 run `pnpm i` and `pnpm dev`. Then you can enable the plugin in your vault (also you can change the debug setting to true).
 You can also change the settings plugin `initialScript` to wherever you want that will load node.js in your PATH. For me it's `source ~/.profile`.
+Also make sure you have exitsing folders for `dist` in this repo, and for your `OUT_DIR` in your vault.
+
+[See more common issues here](./docs/common-problems.md)
 
 ## Credits
 
