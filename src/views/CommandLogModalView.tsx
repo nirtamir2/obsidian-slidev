@@ -3,7 +3,7 @@ import { LogMessage } from "./PresentationView";
 
 type Props = { messages: Array<LogMessage> };
 
-export function CommandLogView(props: Props) {
+export function CommandLogModalView(props: Props) {
 	const [listRef, setListRef] = createSignal<HTMLUListElement | null>(null);
 
 	function scrollToListEnd() {
