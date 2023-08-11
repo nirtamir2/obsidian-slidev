@@ -141,7 +141,7 @@ export const PresentationView = () => {
 			console.log("onCleanup");
 			if (command != null) {
 				command.kill("SIGINT");
-			}Ω
+			}
 		});
 	});
 
