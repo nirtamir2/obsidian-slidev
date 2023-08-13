@@ -1,16 +1,18 @@
 import { parse } from "@slidev/parser";
 import path from "node:path";
 import type { App, PluginManifest, Vault } from "obsidian";
-import { MarkdownView, Plugin, debounce } from "obsidian";
+import { MarkdownView, Notice, Plugin, debounce } from "obsidian";
 import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import "./styles.css";
 import { getVaultPath } from "./utils/getVaultPath";
+import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 import {
 	SLIDEV_PRESENTATION_VIEW_TYPE,
 	SlidevPresentationView,
 } from "./views/SlidevPresentationView";
+
 
 function getDefaultSlidevTemplateLocation(vault: Vault) {
 	const vaultPath = getVaultPath(vault);
@@ -37,9 +39,13 @@ export default class SlidevPlugin extends Plugin {
 			true,
 		) as unknown as typeof this.saveSettings;
 	}
-
 	override async onload() {
 		await this.#loadSettings();
+
+		const { slidevTemplateLocation } = this.settings;
+		if (!(await isSlidevCommandExistsInLocation(slidevTemplateLocation))) {
+			new Notice(`slidev not found in ${slidevTemplateLocation}`);
+		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SlidevSettingTab(this.app, this));

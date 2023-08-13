@@ -20,6 +20,9 @@ dependencies:
   got:
     specifier: ^13.0.0
     version: 13.0.0
+  lookpath:
+    specifier: ^1.2.2
+    version: 1.2.2
   solid-js:
     specifier: ^1.7.8
     version: 1.7.8
@@ -5569,6 +5572,12 @@ packages:
     dependencies:
       chalk: 2.4.2
     dev: true
+
+  /lookpath@1.2.2:
+    resolution: {integrity: sha512-k2Gmn8iV6qdME3ztZC2spubmQISimFOPLuQKiPaLcVdRz0IpdxrNClVepMlyTJlhodm/zG/VfbkWERm3kUIh+Q==}
+    engines: {npm: '>=6.13.4'}
+    hasBin: true
+    dev: false
 
   /loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}

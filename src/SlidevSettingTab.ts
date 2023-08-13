@@ -1,6 +1,8 @@
+import { lookpath } from "lookpath";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
+import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 
 export interface SlidevPluginSettings {
 	port: number;
@@ -59,14 +61,13 @@ export class SlidevSettingTab extends PluginSettingTab {
 					),
 			);
 
-		new Setting(containerEl)
-			.setName("slidev template location")
-			.setDesc("The template location used by slidev")
-			.addText((text) =>
-				text
-					.setPlaceholder(
-						String(DEFAULT_SETTINGS.slidevTemplateLocation),
-					)
+		const templateLocationSetting = new Setting(containerEl)
+			.setName("Slidev template location")
+			.setDesc("The template location used by Slidev")
+			.addText((text) => {
+				text.setPlaceholder(
+					String(DEFAULT_SETTINGS.slidevTemplateLocation),
+				)
 					.setValue(
 						String(this.plugin.settings.slidevTemplateLocation),
 					)
@@ -75,11 +76,41 @@ export class SlidevSettingTab extends PluginSettingTab {
 							this.plugin.settings.slidevTemplateLocation = value;
 							await this.plugin.saveSettings();
 						}, 750),
-					),
+					);
+			});
+
+		const templateLocationDescriptionNode = document.createElement("div");
+		templateLocationSetting.infoEl.append(templateLocationDescriptionNode);
+
+		async function handleVerifySlidevTemplate(location: string) {
+			const isValid = await isSlidevCommandExistsInLocation(location);
+			if (isValid) {
+				templateLocationDescriptionNode.textContent =
+					"Location is valid";
+				templateLocationDescriptionNode.className =
+					"text-sm text-green-500";
+			} else {
+				templateLocationDescriptionNode.textContent =
+					"Location is invalid. slidev command not exits.";
+				templateLocationDescriptionNode.className =
+					"text-sm text-red-500";
+			}
+		}
+
+		templateLocationSetting.addButton((button) => {
+			button.setButtonText("Verify").onClick(() => {
+				void handleVerifySlidevTemplate(
+					this.plugin.settings.slidevTemplateLocation,
+				);
+			});
+
+			void handleVerifySlidevTemplate(
+				this.plugin.settings.slidevTemplateLocation,
 			);
+		});
 
 		new Setting(containerEl)
-			.setName("Initial Script")
+			.setName("Initial script")
 			.setDesc("The script to load Node.js to PATH")
 			.addText((text) =>
 				text
