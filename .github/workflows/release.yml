@@ -24,7 +24,7 @@ jobs:
                   node-version: 18
             - name: Create local changes
               run: |
-                  npm run version ${{ github.event.inputs.version }}
+                  npm run version
             - name: Commit files
               run: |
                   git config --local user.email "github-actions[bot]@users.noreply.github.com"

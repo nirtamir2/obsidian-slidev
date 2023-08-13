@@ -18,7 +18,7 @@
 		"format": "prettier \"**/*\" --write --ignore-unknown",
 		"lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
 		"type-check": "tsc --pretty --noEmit",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs"
 	},
 	"dependencies": {
 		"@slidev/cli": "^0.42.5",
