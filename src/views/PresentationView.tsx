@@ -286,6 +286,16 @@ export const PresentationView = () => {
     );
   }
 
+  const title = () => {
+    const activeFile = app.workspace.getActiveFile();
+    const currentSlideFileName = activeFile == null ? "" : activeFile.basename;
+
+    const slideNumber =
+      store.currentSlideNumber === 0 ? "" : ` #${store.currentSlideNumber}`;
+
+    return `${currentSlideFileName}${slideNumber}`;
+  };
+
   return (
     <Suspense
       fallback={
@@ -314,9 +324,7 @@ export const PresentationView = () => {
           }
         >
           <SlidevPresentation
-            title={`${app.vault.adapter.getName()} #${
-              store.currentSlideNumber
-            }`}
+            title={title()}
             src={iframeSrcUrl()}
             onOpenSlideUrl={handleOpenSlideUrl}
             onOpenSlidevPresenterUrl={handleOpenSlidePresenterUrl}
