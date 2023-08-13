@@ -8,11 +8,11 @@ This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://
 
 1. Make sure you have node.js installed on your computer or [install it](https://nodejs.org/en/download/package-manager).
 2. Install [slidev](https://sli.dev/) template by following the [installation guide](https://sli.dev/guide/install.html#starter-template) or just running `npm init slidev@latest`. Make sure to install dependencies `npm i`.
-3. Search `obsidian-slidev` in the community plugins of obsidian, install it and enable it.
-4. Go to the `obsidian-slidev` settings
-5. Add `node` path to environment variable `PATH` or set absolute path of node in the obsidian-slidev setting `initial script`.
-6. Paste the path of your slidev template into the obsidian-slidev `Slidev template location`. Click verify and make sure the location is valid.
-7. Now you can execute the command `Slidev: open slidev presentation view`.
+3. Search `obsidian-slidev` in the community plugins of obsidian (you can also download the zip file from the latest release in the [release page](https://github.com/nirtamir2/obsidian-slidev/releases) and put it inside `<your-vault>/.obsidian/plugins`, install it and enable it.
+4. Change `obsidian-slidev` settings
+   1. Add `node` path to environment variable `PATH` or set absolute path of node in the obsidian-slidev setting `initial script`.
+   2. Paste the path of your slidev template into the obsidian-slidev `Slidev template location`. Click verify and make sure the location is valid.
+5. Now you can execute the command `Slidev: open slidev presentation view`.
 
 ## Contributing
 
