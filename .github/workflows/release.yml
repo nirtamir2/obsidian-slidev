@@ -8,7 +8,7 @@ on:
         required: true
 
 env:
-  PLUGIN_NAME: obsidian-slidev
+  PLUGIN_NAME: slidev
 
 jobs:
   bump:
