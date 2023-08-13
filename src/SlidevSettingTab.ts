@@ -1,3 +1,4 @@
+import { platform } from "node:os";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
@@ -10,9 +11,11 @@ export interface SlidevPluginSettings {
 	slidevTemplateLocation: string;
 }
 
+const isWindows = platform() === "win32";
+
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
-	initialScript: "source $HOME/.profile",
+	initialScript: isWindows ? "" : "source $HOME/.profile",
 	slidevTemplateLocation: "",
 	isDebug: false,
 };
