@@ -3,3 +3,5 @@ slidev-template
 example/.obsidian
 styles.css
 main.js
+manifest.json
+versions.json
