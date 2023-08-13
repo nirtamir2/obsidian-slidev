@@ -3,7 +3,7 @@
 ### such file or directory OUT_DIR
 
 ```
-ENOENT: no such file or directory, mkdir '/Users/nirtamir/dev/work/obsidian-slidev/dist'
+ENOENT: no such file or directory, mkdir '/Users/nirtamir/dev/work/slidev/dist'
 ```
 
 Make sure you have dist folder BOTH in your project and that your OUT_DIR env variable already have a folder.

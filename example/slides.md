@@ -8,7 +8,7 @@ defaults:
 
 ---
 ---
-## This is the obsidian-slidev plugin
+## This is the slidev plugin
 
 ---
 layout: two-cols

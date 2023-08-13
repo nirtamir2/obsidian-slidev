@@ -128,17 +128,9 @@
                 "file": "slides.md"
               }
             }
-          },
-          {
-            "id": "9f9b2ae2957cf4e4",
-            "type": "leaf",
-            "state": {
-              "type": "slidev-presentation-view",
-              "state": {}
-            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -155,7 +147,7 @@
       "obsidian-slidev:Open Slidev Presentation View": false
     }
   },
-  "active": "9f9b2ae2957cf4e4",
+  "active": "2c38eed3ed5d369f",
   "lastOpenFiles": [
     "screenshot.png"
   ]

@@ -10,7 +10,7 @@ This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://
 2. Install [slidev](https://sli.dev/) template by following the [installation guide](https://sli.dev/guide/install.html#starter-template) or just running `npm init slidev@latest`. Make sure to install dependencies `npm i`.
 3. Search `slidev` in the community plugins of obsidian (you can also download the zip file from the latest release in the [release page](https://github.com/nirtamir2/obsidian-slidev/releases) and put it inside `<your-vault>/.obsidian/plugins`, install it and enable it.
 4. Change `slidev` plugin settings
-   1. Add `node` path to environment variable `PATH` or set absolute path of node in the obsidian-slidev setting `initial script`.
+   1. Add `node` path to environment variable `PATH` or set absolute path of node in the setting `initial script`.
    2. Paste the path of your slidev template into the `Slidev template location`. Click verify and make sure the location is valid.
 5. Now you can execute the command `Slidev: open slidev presentation view`.
 
@@ -20,10 +20,10 @@ This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://
 Change `.env` file content to
 
 ```dotenv
-OUT_DIR="<relative-path-to-your-vault>/.obsidian/plugins/obsidian-slidev"
+OUT_DIR="<relative-path-to-your-vault>/.obsidian/plugins/slidev"
 ```
 
-Also make sure you have existing folders for `dist` in this repo, and for your `OUT_DIR` in your vault (you may need to create `<relative-path-to-your-vault>/.obsidian/plugins/obsidian-slidev` folder.
+Also make sure you have existing folders for `dist` in this repo, and for your `OUT_DIR` in your vault (you may need to create `<relative-path-to-your-vault>/.obsidian/plugins/slidev` folder.
 
 [See more common issues here](./docs/common-problems.md)
 

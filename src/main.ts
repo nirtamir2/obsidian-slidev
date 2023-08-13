@@ -19,7 +19,7 @@ function getDefaultSlidevTemplateLocation(vault: Vault) {
     vaultPath,
     ".obsidian",
     "plugins",
-    "obsidian-slidev",
+    "slidev",
     "slidev-template",
   );
 }
