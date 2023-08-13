@@ -1,7 +1,7 @@
 {
   "id": "obsidian-slidev",
   "name": "Slidev",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "minAppVersion": "0.15.0",
   "description": "Obsidian plugin to run slidev slides",
   "author": "Nir Tamir",
