@@ -1,4 +1,3 @@
-import { lookpath } from "lookpath";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type SlidevPlugin from "./main";
@@ -39,7 +38,7 @@ export class SlidevSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Settings for slidev plugin." });
+		containerEl.createEl("h2", { text: "Settings for Slidev plugin" });
 
 		new Setting(containerEl)
 			.setName("Port")
@@ -88,12 +87,12 @@ export class SlidevSettingTab extends PluginSettingTab {
 				templateLocationDescriptionNode.textContent =
 					"Location is valid";
 				templateLocationDescriptionNode.className =
-					"text-sm text-green-500";
+					"text-xs text-green-500";
 			} else {
 				templateLocationDescriptionNode.textContent =
 					"Location is invalid. slidev command not exits.";
 				templateLocationDescriptionNode.className =
-					"text-sm text-red-500";
+					"text-xs text-red-500";
 			}
 		}
 
