@@ -4,7 +4,11 @@
 	"description": "Obsidian plugin to run slidev slides",
 	"keywords": [],
 	"license": "MIT",
-	"author": "",
+	"author": "Nir Tamir <nirtamir2@gmail.com>",
+	"repository": {
+		"url": "https://github.com/nirtamir2/obsidian-slidev",
+		"type": "git"
+	},
 	"type": "module",
 	"main": "main.js",
 	"scripts": {
