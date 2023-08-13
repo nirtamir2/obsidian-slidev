@@ -4,7 +4,6 @@ import type { App } from "obsidian";
 import type { SlidevPluginSettings } from "../SlidevSettingTab";
 import { getVaultPath } from "../utils/getVaultPath";
 
-
 export function createStartServerCommand({
 	app,
 	config,
@@ -15,17 +14,6 @@ export function createStartServerCommand({
 	const vaultPath = getVaultPath(app.vault);
 
 	const templatePath = config.slidevTemplateLocation;
-	console.log("templatePath", templatePath);
-	console.log("settings:");
-	console.log(
-		path.join(
-			vaultPath,
-			".obsidian",
-			"plugins",
-			"obsidian-slidev",
-			"slidev-template",
-		),
-	);
 
 	const activeFile = app.workspace.getActiveFile();
 	const currentSlideFilePath = activeFile == null ? "" : activeFile.path;
@@ -35,17 +23,10 @@ export function createStartServerCommand({
 		currentSlideFilePath,
 	);
 
-	console.log(
-		"slidePathRelativeToTemplatePath",
-		slidePathRelativeToTemplatePath,
-	);
-
 	const codeBlockContent = [
-		// This makes npm usable
+		// This makes node & npm usable
 		config.initialScript,
 		`cd ${templatePath}`,
-		// Just make sure it install the stuff (because I ignore node_modules in git)
-		"npm i",
 		// If you use npm scripts, don't forget to add -- after the npm command:
 		`npm run slidev ${slidePathRelativeToTemplatePath} -- --port ${config.port}`,
 	].join("\n");
