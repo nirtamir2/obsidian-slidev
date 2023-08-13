@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-slidev",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Obsidian plugin to run slidev slides",
 	"keywords": [],
 	"repository": {
