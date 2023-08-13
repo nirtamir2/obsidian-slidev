@@ -1,5 +1,5 @@
-import { useContext } from "solid-js";
 import type { App } from "obsidian";
+import { useContext } from "solid-js";
 import { AppContext } from "./AppContext";
 
 export const useApp = (): App => {

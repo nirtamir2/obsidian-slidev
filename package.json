@@ -3,12 +3,12 @@
 	"version": "0.0.1",
 	"description": "Obsidian plugin to run slidev slides",
 	"keywords": [],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirtamir2/obsidian-slidev"
+	},
 	"license": "MIT",
 	"author": "Nir Tamir <nirtamir2@gmail.com>",
-	"repository": {
-		"url": "https://github.com/nirtamir2/obsidian-slidev",
-		"type": "git"
-	},
 	"type": "module",
 	"main": "main.js",
 	"scripts": {

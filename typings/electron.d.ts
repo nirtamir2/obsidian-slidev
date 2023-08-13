@@ -13507,9 +13507,7 @@ An example of showing devtools in a `BrowserWindow`:
 		 * conjunction with `did-create-window`.
 		 */
 		setWindowOpenHandler(
-			handler: (
-				details: HandlerDetails,
-			) =>
+			handler: (details: HandlerDetails) =>
 				| { action: "deny" }
 				| {
 						action: "allow";

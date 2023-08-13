@@ -1,6 +1,6 @@
+import path from "node:path";
 import type { Plugin } from "obsidian";
 import { Platform, debounce } from "obsidian";
-import path from "node:path";
 
 declare global {
 	interface HmrOptions {
@@ -60,9 +60,12 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
 				}
 				if (file === pluginDir) {
 					// reload
-				} else if (watchFiles.length > 0 && !watchFiles.some((o) => file.endsWith(o))) {
-						return;
-					}
+				} else if (
+					watchFiles.length > 0 &&
+					!watchFiles.some((o) => file.endsWith(o))
+				) {
+					return;
+				}
 				await restartPlugin();
 			}
 		},
@@ -72,8 +75,8 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
 
 	plugin.registerEvent(vault.on("raw", onChange));
 
-	plugin.register(() => { adapter.stopWatchPath(pluginDir); });
+	plugin.register(() => {
+		adapter.stopWatchPath(pluginDir);
+	});
 	adapter.startWatchPath(pluginDir);
 };
-
-

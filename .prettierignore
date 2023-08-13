@@ -1,1 +1,5 @@
 .editorconfig
+slidev-template
+example/.obsidian
+styles.css
+main.js
