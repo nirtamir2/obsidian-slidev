@@ -13,7 +13,6 @@ import {
 	SlidevPresentationView,
 } from "./views/SlidevPresentationView";
 
-
 function getDefaultSlidevTemplateLocation(vault: Vault) {
 	const vaultPath = getVaultPath(vault);
 	return path.join(
@@ -39,13 +38,9 @@ export default class SlidevPlugin extends Plugin {
 			true,
 		) as unknown as typeof this.saveSettings;
 	}
+
 	override async onload() {
 		await this.#loadSettings();
-
-		const { slidevTemplateLocation } = this.settings;
-		if (!(await isSlidevCommandExistsInLocation(slidevTemplateLocation))) {
-			new Notice(`slidev not found in ${slidevTemplateLocation}`);
-		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SlidevSettingTab(this.app, this));
@@ -91,7 +86,7 @@ export default class SlidevPlugin extends Plugin {
 			name: "Open slidev presentation view",
 			icon: "presentation",
 			callback: () => {
-				void this.#activateView();
+				void this.#handleOpenPresentationView();
 			},
 		});
 
@@ -114,6 +109,15 @@ export default class SlidevPlugin extends Plugin {
 		if (import.meta.env.DEV) {
 			window.hmr(this);
 		}
+	}
+
+	async #handleOpenPresentationView() {
+		const { slidevTemplateLocation } = this.settings;
+		if (!(await isSlidevCommandExistsInLocation(slidevTemplateLocation))) {
+			new Notice(`slidev not found in ${slidevTemplateLocation}`);
+			return;
+		}
+		void this.#activateView();
 	}
 
 	async #navigateToCurrentSlide() {

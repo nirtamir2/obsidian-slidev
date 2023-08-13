@@ -1,4 +1,4 @@
-import {lookpath} from "lookpath";
+import { lookpath } from "lookpath";
 import path from "node:path";
 
 export async function isSlidevCommandExistsInLocation(location: string) {
