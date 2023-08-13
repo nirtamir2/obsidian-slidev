@@ -39,18 +39,8 @@ export default defineConfig(async ({ mode }) => {
 						src: "manifest.json",
 						dest: ".",
 					},
-					{
-						// If this not work - move it to public folder
-						src: "./slidev-template/*",
-						dest: "slidev-template"
-					}
 				],
 			}),
-			loader({
-				".lua": "binary",
-				".tex": "binary",
-				".sty": "binary",
-			}), // src/resources.ts
 			prod ? undefined : inject(["src/hmr.ts"]),
 		],
 		build: {
@@ -106,24 +96,6 @@ export default defineConfig(async ({ mode }) => {
 		},
 	};
 });
-
-const loader = (config: Partial<Record<string, "binary">>): Plugin => {
-	return {
-		name: "binary-boader",
-		enforce: "pre",
-		async load(id) {
-			const format = config[path.extname(id)];
-			if (format === "binary") {
-				const buffer = await readFile(id);
-				return {
-					code: `export default Uint8Array.from(atob('${buffer.toString(
-						"base64",
-					)}'), c => c.charCodeAt(0));`,
-				};
-			}
-		},
-	};
-};
 
 const inject = (files: Array<string>): Plugin => {
 	if (files.length > 0) {
