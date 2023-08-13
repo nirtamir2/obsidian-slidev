@@ -1,27 +1,36 @@
 ---
 defaults:
-    layout: "fact"
+ layout: "fact"
+
 ---
 
 # Hello from Slidev
 
 ---
-
+---
 ## This is the obsidian-slidev plugin
 
 ---
+layout: two-cols
 
-## The code examples are great here!
+---
+##  Here I load image to the right
+and I can still have a list
+- First
+- Second
+	- Senod but nested
+		- nest
 
-```bash
-npm init slidev@latest
-```
+
+::right::
+
+![Cool image](https://source.unsplash.com/collection/94734566/1920x1080)
 
 ---
 
 ## You can mark rows!
 
-```tsx {4, 7-14, 16, all}
+```tsx {4|6-14|16|all}
 import { createEffect, createSignal, onCleanup } from "solid-js";
 
 export default function Component() {
@@ -42,28 +51,25 @@ export default function Component() {
 ```
 
 ---
-
 layout: image
-image: ../docs/screenshot.png
+image:  https://source.unsplash.com/collection/94734566/1920x1080
 
 ---
 
-Full image layout
+# Full image layout
 
 ---
-
-layout: iframe-left
+layout: iframe-right
 url: https://github.com/nirtamir2/obsidian-slidev
-layout: "iframe-right"
 
 ---
 
-You can see this source
+# See this on the right?
+You can see this source to my github repository here
 
 ---
-
 layout: end
 
+---
 # The End
 
-![screenshort]()

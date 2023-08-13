@@ -13,6 +13,9 @@ node_modules
 main.js
 styles.css
 
+# The plugins in the app
+example/.obsidian
+
 # Exclude sourcemaps
 *.map
 
