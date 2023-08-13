@@ -40,10 +40,16 @@ export class SlidevSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
 		containerEl.createEl("h2", { text: "Settings for Slidev plugin" });
 
-		new Setting(containerEl)
+		this.addPortSetting();
+		this.addSlidevTemplateLocationSetting();
+		this.addInitialScriptSetting();
+		this.addDebugModeSetting();
+	}
+
+	private addPortSetting() {
+		new Setting(this.containerEl)
 			.setName("Port")
 			.setDesc("Slidev port Number")
 			.addText((text) =>
@@ -62,8 +68,41 @@ export class SlidevSettingTab extends PluginSettingTab {
 						}, 750),
 					),
 			);
+	}
 
-		const templateLocationSetting = new Setting(containerEl)
+	private addDebugModeSetting() {
+		new Setting(this.containerEl)
+			.setName("Debug mode")
+			.setDesc("Should show debug mode")
+			.addToggle((value) =>
+				value.setValue(this.plugin.settings.isDebug).onChange(
+					debounce(async (value) => {
+						this.plugin.settings.isDebug = value;
+						await this.plugin.saveSettings();
+					}, 750),
+				),
+			);
+	}
+
+	private addInitialScriptSetting() {
+		new Setting(this.containerEl)
+			.setName("Initial script")
+			.setDesc("The script to load Node.js to PATH")
+			.addText((text) =>
+				text
+					.setPlaceholder(String(DEFAULT_SETTINGS.initialScript))
+					.setValue(String(this.plugin.settings.initialScript))
+					.onChange(
+						debounce(async (value) => {
+							this.plugin.settings.initialScript = value;
+							await this.plugin.saveSettings();
+						}, 750),
+					),
+			);
+	}
+
+	private addSlidevTemplateLocationSetting() {
+		const templateLocationSetting = new Setting(this.containerEl)
 			.setName("Slidev template location")
 			.setDesc("The template location used by Slidev")
 			.addText((text) => {
@@ -110,32 +149,5 @@ export class SlidevSettingTab extends PluginSettingTab {
 				this.plugin.settings.slidevTemplateLocation,
 			);
 		});
-
-		new Setting(containerEl)
-			.setName("Initial script")
-			.setDesc("The script to load Node.js to PATH")
-			.addText((text) =>
-				text
-					.setPlaceholder(String(DEFAULT_SETTINGS.initialScript))
-					.setValue(String(this.plugin.settings.initialScript))
-					.onChange(
-						debounce(async (value) => {
-							this.plugin.settings.initialScript = value;
-							await this.plugin.saveSettings();
-						}, 750),
-					),
-			);
-
-		new Setting(containerEl)
-			.setName("Debug mode")
-			.setDesc("Should show debug mode")
-			.addToggle((value) =>
-				value.setValue(this.plugin.settings.isDebug).onChange(
-					debounce(async (value) => {
-						this.plugin.settings.isDebug = value;
-						await this.plugin.saveSettings();
-					}, 750),
-				),
-			);
 	}
 }
