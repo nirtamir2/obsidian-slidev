@@ -1,9 +1,9 @@
 {
 	"id": "obsidian-slidev",
 	"name": "Slidev",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "This integrates Slidev presentations into obsidian",
+	"description": "Obsidian plugin to run slidev slides",
 	"author": "Nir Tamir",
 	"authorUrl": "https://github.com/nirtamir2",
 	"fundingUrl": "https://github.com/sponsors/nirtamir2",
