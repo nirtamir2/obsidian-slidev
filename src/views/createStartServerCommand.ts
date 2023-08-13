@@ -1,16 +1,9 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
-import type { App, Vault } from "obsidian";
-import { FileSystemAdapter } from "obsidian";
+import type { App } from "obsidian";
 import type { SlidevPluginSettings } from "../SlidevSettingTab";
+import { getVaultPath } from "../utils/getVaultPath";
 
-function getVaultPath(vault: Vault) {
-	const { adapter } = vault;
-	if (adapter instanceof FileSystemAdapter) {
-		return adapter.getBasePath();
-	}
-	throw new Error("No vault path");
-}
 
 export function createStartServerCommand({
 	app,
@@ -21,23 +14,30 @@ export function createStartServerCommand({
 }) {
 	const vaultPath = getVaultPath(app.vault);
 
-	const activeFile = app.workspace.getActiveFile();
-	const currentSlideFile = activeFile == null ? "" : activeFile.path;
-	const templatePath = path.join(
-		vaultPath,
-		".obsidian",
-		"plugins",
-		"obsidian-slidev",
-		"slidev-template",
+	const templatePath = config.slidevTemplateLocation;
+	console.log("templatePath", templatePath);
+	console.log("settings:");
+	console.log(
+		path.join(
+			vaultPath,
+			".obsidian",
+			"plugins",
+			"obsidian-slidev",
+			"slidev-template",
+		),
 	);
 
+	const activeFile = app.workspace.getActiveFile();
+	const currentSlideFilePath = activeFile == null ? "" : activeFile.path;
+
 	const slidePathRelativeToTemplatePath = path.join(
-		templatePath,
-		"..",
-		"..",
-		"..",
-		"..",
-		currentSlideFile,
+		vaultPath,
+		currentSlideFilePath,
+	);
+
+	console.log(
+		"slidePathRelativeToTemplatePath",
+		slidePathRelativeToTemplatePath,
 	);
 
 	const codeBlockContent = [

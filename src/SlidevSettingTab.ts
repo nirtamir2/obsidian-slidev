@@ -6,11 +6,13 @@ export interface SlidevPluginSettings {
 	port: number;
 	initialScript: string;
 	isDebug: boolean;
+	slidevTemplateLocation: string;
 }
 
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
 	port: 3030,
 	initialScript: "source $HOME/.profile",
+	slidevTemplateLocation: "",
 	isDebug: false,
 };
 
@@ -52,6 +54,25 @@ export class SlidevSettingTab extends PluginSettingTab {
 								return;
 							}
 							this.plugin.settings.port = parsedNumber;
+							await this.plugin.saveSettings();
+						}, 750),
+					),
+			);
+
+		new Setting(containerEl)
+			.setName("slidev template location")
+			.setDesc("The template location used by slidev")
+			.addText((text) =>
+				text
+					.setPlaceholder(
+						String(DEFAULT_SETTINGS.slidevTemplateLocation),
+					)
+					.setValue(
+						String(this.plugin.settings.slidevTemplateLocation),
+					)
+					.onChange(
+						debounce(async (value) => {
+							this.plugin.settings.slidevTemplateLocation = value;
 							await this.plugin.saveSettings();
 						}, 750),
 					),

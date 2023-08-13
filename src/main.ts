@@ -1,14 +1,27 @@
 import { parse } from "@slidev/parser";
-import type { App, PluginManifest } from "obsidian";
+import path from "node:path";
+import type { App, PluginManifest, Vault } from "obsidian";
 import { MarkdownView, Plugin, debounce } from "obsidian";
 import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import "./styles.css";
+import { getVaultPath } from "./utils/getVaultPath";
 import {
 	SLIDEV_PRESENTATION_VIEW_TYPE,
 	SlidevPresentationView,
 } from "./views/SlidevPresentationView";
+
+function getDefaultSlidevTemplateLocation(vault: Vault) {
+	const vaultPath = getVaultPath(vault);
+	return path.join(
+		vaultPath,
+		".obsidian",
+		"plugins",
+		"obsidian-slidev",
+		"slidev-template",
+	);
+}
 
 export default class SlidevPlugin extends Plugin {
 	settings: SlidevPluginSettings = DEFAULT_SETTINGS;
@@ -162,7 +175,12 @@ export default class SlidevPlugin extends Plugin {
 	async #loadSettings() {
 		this.settings = Object.assign(
 			{},
-			DEFAULT_SETTINGS,
+			{
+				...DEFAULT_SETTINGS,
+				slidevTemplateLocation: getDefaultSlidevTemplateLocation(
+					this.app.vault,
+				),
+			},
 			(await this.loadData()) as SlidevPluginSettings,
 		);
 	}
