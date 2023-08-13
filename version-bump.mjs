@@ -7,9 +7,9 @@ const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const version = process.argv.at(2) ?? pkg.version;
 
 if (version !== pkg.version) {
-	pkg.version = version;
-	writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
-	exec("git add package.json");
+  pkg.version = version;
+  writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
+  exec("git add package.json");
 }
 
 // read minAppVersion from manifest.json and bump version to target version

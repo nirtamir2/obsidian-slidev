@@ -1,9 +1,9 @@
 import { createContext } from "solid-js";
 
 export interface SlidevStore {
-	currentSlideNumber: number;
+  currentSlideNumber: number;
 }
 
 export const SlidevStoreContext = createContext<SlidevStore>({
-	currentSlideNumber: -1,
+  currentSlideNumber: -1,
 });

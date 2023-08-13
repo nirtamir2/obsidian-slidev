@@ -3,80 +3,80 @@ import type { Plugin } from "obsidian";
 import { Platform, debounce } from "obsidian";
 
 declare global {
-	interface HmrOptions {
-		watchFiles?:
-			| Array<"main.js" | "manifest.json" | "styles.css">
-			| Array<string>;
-	}
-	interface Window {
-		hmr(plugin: Plugin, options?: HmrOptions): void;
-	}
+  interface HmrOptions {
+    watchFiles?:
+      | Array<"main.js" | "manifest.json" | "styles.css">
+      | Array<string>;
+  }
+  interface Window {
+    hmr(plugin: Plugin, options?: HmrOptions): void;
+  }
 }
 
 Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
-	if (Platform.isMobile) {
-		return;
-	}
+  if (Platform.isMobile) {
+    return;
+  }
 
-	console.log(`[hmr: ${plugin.manifest.name}]`, new Date());
+  console.log(`[hmr: ${plugin.manifest.name}]`, new Date());
 
-	options ??= {};
-	options.watchFiles ??= ["main.js", "manifest.json", "styles.css"];
-	const { watchFiles } = options;
+  options ??= {};
+  options.watchFiles ??= ["main.js", "manifest.json", "styles.css"];
+  const { watchFiles } = options;
 
-	const {
-		app: {
-			vault: { adapter },
-			plugins,
-		},
-		manifest: { dir: pluginDir, id },
-	} = plugin;
-	const {
-		app: { vault },
-	} = plugin;
+  const {
+    app: {
+      vault: { adapter },
+      plugins,
+    },
+    manifest: { dir: pluginDir, id },
+  } = plugin;
+  const {
+    app: { vault },
+  } = plugin;
 
-	const restartPlugin = async () => {
-		const dbgKey = "debug-plugin";
-		const oldDebug = localStorage.getItem(dbgKey);
-		try {
-			localStorage.setItem(dbgKey, "1");
-			await plugins.disablePlugin(id);
-			await plugins.enablePlugin(id);
-		} finally {
-			if (oldDebug) {
-				localStorage.setItem(dbgKey, oldDebug);
-			} else {
-				localStorage.removeItem(dbgKey);
-			}
-		}
-	};
+  const restartPlugin = async () => {
+    const dbgKey = "debug-plugin";
+    const oldDebug = localStorage.getItem(dbgKey);
+    try {
+      localStorage.setItem(dbgKey, "1");
+      await plugins.disablePlugin(id);
+      await plugins.enablePlugin(id);
+    } finally {
+      if (oldDebug) {
+        localStorage.setItem(dbgKey, oldDebug);
+      } else {
+        localStorage.removeItem(dbgKey);
+      }
+    }
+  };
 
-	const entry = path.normalize(path.join(pluginDir, "main.js"));
-	const onChange = debounce(
-		async (file: string) => {
-			if (file.startsWith(pluginDir)) {
-				if (!(await adapter.exists(entry))) {
-					return;
-				}
-				if (file === pluginDir) {
-					// reload
-				} else if (
-					watchFiles.length > 0 &&
-					!watchFiles.some((o) => file.endsWith(o))
-				) {
-					return;
-				}
-				await restartPlugin();
-			}
-		},
-		500,
-		true,
-	);
+  const entry = path.normalize(path.join(pluginDir, "main.js"));
+  const onChange = debounce(
+    async (file: string) => {
+      if (file.startsWith(pluginDir)) {
+        if (!(await adapter.exists(entry))) {
+          return;
+        }
+        if (file === pluginDir) {
+          // reload
+        } else if (
+          watchFiles.length > 0 &&
+          !watchFiles.some((o) => file.endsWith(o))
+        ) {
+          return;
+        }
+        await restartPlugin();
+      }
+    },
+    500,
+    true,
+  );
 
-	plugin.registerEvent(vault.on("raw", onChange));
+  plugin.registerEvent(vault.on("raw", onChange));
 
-	plugin.register(() => {
-		adapter.stopWatchPath(pluginDir);
-	});
-	adapter.startWatchPath(pluginDir);
+  plugin.register(() => {
+    adapter.stopWatchPath(pluginDir);
+  });
+  adapter.startWatchPath(pluginDir);
 };

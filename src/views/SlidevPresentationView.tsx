@@ -14,63 +14,63 @@ import { SlidevStoreContext } from "./SlidevStoreContext";
 export const SLIDEV_PRESENTATION_VIEW_TYPE = "slidev-presentation-view";
 
 export class SlidevPresentationView extends ItemView {
-	settings: SlidevPluginSettings;
-	setSlidevStore: SetStoreFunction<SlidevStore> = () => {
-		return -1;
-	};
+  settings: SlidevPluginSettings;
+  setSlidevStore: SetStoreFunction<SlidevStore> = () => {
+    return -1;
+  };
 
-	#dispose?: () => void;
+  #dispose?: () => void;
 
-	override getIcon(): IconName {
-		return "presentation";
-	}
-	constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
-		super(leaf);
-		this.settings = settings;
-	}
+  override getIcon(): IconName {
+    return "presentation";
+  }
+  constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
+    super(leaf);
+    this.settings = settings;
+  }
 
-	onChangeLine(currentSlideNumber: number) {
-		this.setSlidevStore("currentSlideNumber", currentSlideNumber);
-	}
+  onChangeLine(currentSlideNumber: number) {
+    this.setSlidevStore("currentSlideNumber", currentSlideNumber);
+  }
 
-	getViewType() {
-		return SLIDEV_PRESENTATION_VIEW_TYPE;
-	}
+  getViewType() {
+    return SLIDEV_PRESENTATION_VIEW_TYPE;
+  }
 
-	getDisplayText() {
-		return "Slidev Presentation View";
-	}
+  getDisplayText() {
+    return "Slidev Presentation View";
+  }
 
-	override async onOpen() {
-		const [slidevStore, setSlidevStore] = createStore<SlidevStore>({
-			currentSlideNumber: 0,
-		});
-		this.setSlidevStore = setSlidevStore;
+  override async onOpen() {
+    const [slidevStore, setSlidevStore] = createStore<SlidevStore>({
+      currentSlideNumber: 0,
+    });
+    this.setSlidevStore = setSlidevStore;
 
-		this.#dispose = createRoot((dispose) => {
-			if (this.containerEl.children[1] == null) {
-				throw new Error("SlidevPresentationView root not found");
-			}
+    this.#dispose = createRoot((dispose) => {
+      if (this.containerEl.children[1] == null) {
+        throw new Error("SlidevPresentationView root not found");
+      }
 
-			const element = this.containerEl.children[1];
-			insert(
-				element,
-				<AppContext.Provider value={this.app}>
-					<SettingsContext.Provider value={this.settings}>
-						<SlidevStoreContext.Provider value={slidevStore}>
-							<PresentationView />
-						</SlidevStoreContext.Provider>
-					</SettingsContext.Provider>
-				</AppContext.Provider>,
-			);
-			onCleanup(() => {
-				element.empty();
-			});
-			return dispose;
-		});
-	}
+      const element = this.containerEl.children[1];
+      insert(
+        element,
+        <AppContext.Provider value={this.app}>
+          <SettingsContext.Provider value={this.settings}>
+            <SlidevStoreContext.Provider value={slidevStore}>
+              <PresentationView />
+            </SlidevStoreContext.Provider>
+          </SettingsContext.Provider>
+        </AppContext.Provider>,
+      );
+      onCleanup(() => {
+        element.empty();
+      });
+      return dispose;
+    });
+  }
 
-	override async onClose() {
-		this.#dispose?.();
-	}
+  override async onClose() {
+    this.#dispose?.();
+  }
 }

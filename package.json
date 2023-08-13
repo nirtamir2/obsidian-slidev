@@ -1,53 +1,53 @@
 {
-	"name": "obsidian-slidev",
-	"version": "0.0.2",
-	"description": "Obsidian plugin to run slidev slides",
-	"keywords": [],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/nirtamir2/obsidian-slidev"
-	},
-	"license": "MIT",
-	"author": "Nir Tamir <nirtamir2@gmail.com>",
-	"type": "module",
-	"main": "main.js",
-	"scripts": {
-		"build": "vite build",
-		"dev": "vite build -w -m development",
-		"es-dev": "node esbuild.config.mjs",
-		"format": "prettier \"**/*\" --write --ignore-unknown",
-		"lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
-		"type-check": "tsc --pretty --noEmit",
-		"version": "node version-bump.mjs"
-	},
-	"dependencies": {
-		"@slidev/cli": "^0.42.7",
-		"@slidev/client": "^0.42.7",
-		"@slidev/parser": "^0.42.7",
-		"@slidev/types": "^0.42.7",
-		"got": "^13.0.0",
-		"lookpath": "^1.2.2",
-		"solid-js": "^1.7.11"
-	},
-	"devDependencies": {
-		"@trivago/prettier-plugin-sort-imports": "^4.2.0",
-		"@tsconfig/strictest": "^2.0.1",
-		"@types/node": "^20.4.10",
-		"autoprefixer": "^10.4.15",
-		"builtin-modules": "3.3.0",
-		"esbuild": "0.19.1",
-		"eslint": "^8.47.0",
-		"eslint-config-nirtamir2": "^0.0.56",
-		"obsidian": "latest",
-		"postcss": "^8.4.27",
-		"prettier": "^3.0.1",
-		"prettier-plugin-packagejson": "^2.4.5",
-		"prettier-plugin-tailwindcss": "^0.5.2",
-		"tailwindcss": "^3.3.3",
-		"tslib": "2.6.1",
-		"typescript": "5.1.6",
-		"vite": "^4.4.9",
-		"vite-plugin-solid": "^2.7.0",
-		"vite-plugin-static-copy": "^0.17.0"
-	}
+  "name": "obsidian-slidev",
+  "version": "0.0.2",
+  "description": "Obsidian plugin to run slidev slides",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nirtamir2/obsidian-slidev"
+  },
+  "license": "MIT",
+  "author": "Nir Tamir <nirtamir2@gmail.com>",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build -w -m development",
+    "es-dev": "node esbuild.config.mjs",
+    "format": "prettier \"**/*\" --write --ignore-unknown",
+    "lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
+    "type-check": "tsc --pretty --noEmit",
+    "version": "node version-bump.mjs"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.42.7",
+    "@slidev/client": "^0.42.7",
+    "@slidev/parser": "^0.42.7",
+    "@slidev/types": "^0.42.7",
+    "got": "^13.0.0",
+    "lookpath": "^1.2.2",
+    "solid-js": "^1.7.11"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.2.0",
+    "@tsconfig/strictest": "^2.0.1",
+    "@types/node": "^20.4.10",
+    "autoprefixer": "^10.4.15",
+    "builtin-modules": "3.3.0",
+    "esbuild": "0.19.1",
+    "eslint": "^8.47.0",
+    "eslint-config-nirtamir2": "^0.0.56",
+    "obsidian": "latest",
+    "postcss": "^8.4.27",
+    "prettier": "^3.0.1",
+    "prettier-plugin-packagejson": "^2.4.5",
+    "prettier-plugin-tailwindcss": "^0.5.2",
+    "tailwindcss": "^3.3.3",
+    "tslib": "2.6.1",
+    "typescript": "5.1.6",
+    "vite": "^4.4.9",
+    "vite-plugin-solid": "^2.7.0",
+    "vite-plugin-static-copy": "^0.17.0"
+  }
 }

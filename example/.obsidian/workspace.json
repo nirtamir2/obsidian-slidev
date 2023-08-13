@@ -128,17 +128,9 @@
                 "file": "slides.md"
               }
             }
-          },
-          {
-            "id": "b3168dafbdbf9cde",
-            "type": "leaf",
-            "state": {
-              "type": "slidev-presentation-view",
-              "state": {}
-            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
