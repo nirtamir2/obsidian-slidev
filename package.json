@@ -1,7 +1,7 @@
 {
   "name": "obsidian-slidev",
   "version": "0.0.2",
-  "description": "Obsidian plugin to run slidev slides",
+  "description": "Create Markdown-based presentations in Obsidian using slidev",
   "keywords": [],
   "repository": {
     "type": "git",
