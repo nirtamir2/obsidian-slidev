@@ -32,7 +32,7 @@ jobs:
           git commit -a -m "🔖 Bump version number to ${{ github.event.inputs.version }}"
           git tag -a ${{ github.event.inputs.version }} -m ""
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
