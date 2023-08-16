@@ -1,28 +1,16 @@
 import { parse } from "@slidev/parser";
 import path from "node:path";
-import type { App, PluginManifest, Vault } from "obsidian";
+import type { App, PluginManifest } from "obsidian";
 import { MarkdownView, Notice, Plugin, debounce } from "obsidian";
 import { SlideBoundaryRender } from "./SlideBoundaryRender";
 import type { SlidevPluginSettings } from "./SlidevSettingTab";
 import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
 import "./styles.css";
-import { getVaultPath } from "./utils/getVaultPath";
 import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 import {
   SLIDEV_PRESENTATION_VIEW_TYPE,
   SlidevPresentationView,
 } from "./views/SlidevPresentationView";
-
-function getDefaultSlidevTemplateLocation(vault: Vault) {
-  const vaultPath = getVaultPath(vault);
-  return path.join(
-    vaultPath,
-    ".obsidian",
-    "plugins",
-    "slidev",
-    "slidev-template",
-  );
-}
 
 export default class SlidevPlugin extends Plugin {
   settings: SlidevPluginSettings = DEFAULT_SETTINGS;
@@ -64,24 +52,14 @@ export default class SlidevPlugin extends Plugin {
     // }
 
     // This creates an icon in the left ribbon.
-    const ribbonIconEl = this.addRibbonIcon(
-      "presentation",
-      "Open Slidev Presentation View",
-      () => {
-        void this.#activateView();
-      },
-    );
 
-    // Perform additional things with the ribbon
-    ribbonIconEl.addClass("slidev-plugin-ribbon-class");
-
-    // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-    const statusBarItemEl = this.addStatusBarItem();
-    statusBarItemEl.setText("Status Bar Text");
+    this.addRibbonIcon("presentation", "Open Slidev Presentation View", () => {
+      void this.#activateView();
+    }).addClass("slidev-plugin-ribbon-class");
 
     this.addCommand({
-      id: "open-slidev-presentation-view",
-      name: "Open slidev presentation view",
+      id: "open-presentation-view",
+      name: "Open presentation view",
       icon: "presentation",
       callback: () => {
         void this.#handleOpenPresentationView();
@@ -90,7 +68,6 @@ export default class SlidevPlugin extends Plugin {
 
     // TODO: use different event for it instead of just click. Maybe keydown too.
     // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-
     // Using this function will automatically remove the event listener when this plugin is disabled.
     this.registerDomEvent(document, "click", async () => {
       await this.#navigateToCurrentSlide();
@@ -146,10 +123,6 @@ export default class SlidevPlugin extends Plugin {
     // console.log({ slideIndex, line, currentSlide });
   }
 
-  override onunload() {
-    this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
-  }
-
   #getViewInstance(): SlidevPresentationView | null {
     for (const leaf of this.app.workspace.getLeavesOfType(
       SLIDEV_PRESENTATION_VIEW_TYPE,
@@ -185,8 +158,11 @@ export default class SlidevPlugin extends Plugin {
       {},
       {
         ...DEFAULT_SETTINGS,
-        slidevTemplateLocation: getDefaultSlidevTemplateLocation(
-          this.app.vault,
+        slidevTemplateLocation: path.join(
+          this.app.vault.configDir,
+          "plugins",
+          "slidev",
+          "slidev-template",
         ),
       },
       (await this.loadData()) as SlidevPluginSettings,

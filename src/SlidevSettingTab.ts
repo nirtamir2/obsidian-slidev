@@ -35,11 +35,6 @@ export class SlidevSettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    const { containerEl } = this;
-
-    containerEl.empty();
-    containerEl.createEl("h2", { text: "Settings for Slidev plugin" });
-
     this.addPortSetting();
     this.addSlidevTemplateLocationSetting();
     this.addInitialScriptSetting();

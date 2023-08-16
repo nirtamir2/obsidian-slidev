@@ -1,4 +1,5 @@
-import { FileSystemAdapter, Vault } from "obsidian";
+import type { Vault } from "obsidian";
+import { FileSystemAdapter } from "obsidian";
 
 export function getVaultPath(vault: Vault) {
   const { adapter } = vault;
