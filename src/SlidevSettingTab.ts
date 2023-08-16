@@ -35,6 +35,7 @@ export class SlidevSettingTab extends PluginSettingTab {
   }
 
   display(): void {
+    this.containerEl.empty();
     this.addPortSetting();
     this.addSlidevTemplateLocationSetting();
     this.addInitialScriptSetting();
