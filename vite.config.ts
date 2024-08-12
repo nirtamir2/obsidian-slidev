@@ -14,13 +14,12 @@ if you want to view the source, please visit the github repository https://githu
 */
 `;
 
-// eslint-disable-next-line import/no-unused-modules
 export default defineConfig(async ({ mode }) => {
   const prod = mode === "production";
 
   let { OUT_DIR } = loadEnv(mode, process.cwd(), ["OUT_"]);
 
-  OUT_DIR = path.normalize(OUT_DIR);
+  OUT_DIR = path.normalize(OUT_DIR!);
   if (OUT_DIR !== "dist" && OUT_DIR !== path.join(process.cwd(), "dist")) {
     await rm("dist", { recursive: true });
     exec(

@@ -1,6 +1,0 @@
-node_modules/
-typings/
-main.js
-dist
-src/hmr.ts
-vite.config.ts

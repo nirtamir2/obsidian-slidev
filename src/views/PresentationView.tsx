@@ -47,7 +47,6 @@ export interface LogMessage {
 function createMessage(data: any) {
   return {
     type: "message" as const,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
     value: String(data.toString()),
   };
 }
@@ -103,7 +102,6 @@ function SlidevFallback(props: {
         <div class="text-xl text-red-400">Slidev server is down</div>
         <div>
           No server found at{" "}
-          {/* eslint-disable-next-line react/forbid-elements */}
           <a href={props.slidevUrl}>{props.slidevUrl}</a>
         </div>
         <div>
@@ -148,11 +146,10 @@ function SlidevPresentation(props: {
         </div>
       </h4>
 
-      {/* eslint-disable-next-line react/iframe-missing-sandbox */}
       <iframe
         sandbox="allow-scripts allow-same-origin"
         title="Slidev presentation"
-        class="h-full w-full"
+        class="size-full"
         id="iframe"
         src={props.src}
       />
