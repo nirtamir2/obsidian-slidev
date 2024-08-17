@@ -138,10 +138,13 @@ export default class SlidevPlugin extends Plugin {
   async #activateView() {
     this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
 
-    await this.app.workspace.getRightLeaf(false).setViewState({
-      type: SLIDEV_PRESENTATION_VIEW_TYPE,
-      active: true,
-    });
+    const leaf = this.app.workspace.getRightLeaf(false);
+    if (leaf != null) {
+      await leaf.setViewState({
+        type: SLIDEV_PRESENTATION_VIEW_TYPE,
+        active: true,
+      });
+    }
 
     const viewLeaf = this.app.workspace.getLeavesOfType(
       SLIDEV_PRESENTATION_VIEW_TYPE,

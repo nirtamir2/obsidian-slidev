@@ -35,6 +35,10 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
     app: { vault },
   } = plugin;
 
+  if (pluginDir == null) {
+    throw new Error(`hmr.ts - pluginDir "${pluginDir}" not found.`);
+  }
+
   const restartPlugin = async () => {
     const dbgKey = "debug-plugin";
     const oldDebug = localStorage.getItem(dbgKey);

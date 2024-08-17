@@ -2,7 +2,7 @@ import builtins from "builtin-modules";
 import { exec } from "node:child_process";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import type { Plugin } from "vite";
+import type { Plugin, UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -57,10 +57,14 @@ export default defineConfig(async ({ mode }) => {
       rollupOptions: {
         output: {
           exports: "named",
-          assetFileNames: (v) =>
+          assetFileNames: (v: { name: string }) =>
             v.name === "style.css" ? "styles.css" : v.name,
           banner,
-        },
+        } as NonNullable<
+          NonNullable<
+            NonNullable<UserConfig["build"]>["rollupOptions"]
+          >["output"]
+        >,
         external: [
           "obsidian",
           "electron",
@@ -93,16 +97,16 @@ export default defineConfig(async ({ mode }) => {
         ],
       },
     },
-  };
+  } satisfies UserConfig;
 });
 
-const inject = (files: Array<string>): Plugin => {
+const inject = (files: Array<string>): Plugin | undefined => {
   if (files.length > 0) {
     return {
       name: "inject-code",
       async load(this, id) {
         const info = this.getModuleInfo(id);
-        if (info.isEntry) {
+        if (info != null && info.isEntry) {
           const code = await readFile(id, "utf8");
           const dir = path.dirname(id);
           const inject_code = files
@@ -115,7 +119,9 @@ const inject = (files: Array<string>): Plugin => {
           ${code}
           `;
         }
+        return undefined;
       },
     };
   }
+  return undefined;
 };
