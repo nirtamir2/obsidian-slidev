@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import builtins from "builtin-modules";
 import { exec } from "node:child_process";
 import { readFile, rm } from "node:fs/promises";
@@ -32,6 +33,7 @@ export default defineConfig(async ({ mode }) => {
   return {
     plugins: [
       solidPlugin(),
+      tailwindcss(),
       viteStaticCopy({
         targets: [
           {
@@ -40,7 +42,7 @@ export default defineConfig(async ({ mode }) => {
           },
         ],
       }),
-      prod ? undefined : inject(["src/hmr.ts"]),
+      // prod ? undefined : inject(["./src/hmr.ts"]),
     ],
     build: {
       lib: {
