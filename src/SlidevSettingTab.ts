@@ -1,7 +1,7 @@
 import { platform } from "node:os";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
-import type SlidevPlugin from "./main";
+import type main from "./main";
 import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 
 export interface SlidevPluginSettings {
@@ -16,8 +16,8 @@ const isWindows = platform() === "win32";
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
   port: 3030,
   initialScript: isWindows ? "" : "source $HOME/.profile",
-  slidevTemplateLocation: "",
   isDebug: false,
+  slidevTemplateLocation: "",
 };
 
 function isPortNumber(parsedNumber: number) {
@@ -27,9 +27,10 @@ function isPortNumber(parsedNumber: number) {
 }
 
 export class SlidevSettingTab extends PluginSettingTab {
-  plugin: SlidevPlugin;
+  plugin: main;
+  notice: Notice | null = null;
 
-  constructor(app: App, plugin: SlidevPlugin) {
+  constructor(app: App, plugin: main) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -54,7 +55,7 @@ export class SlidevSettingTab extends PluginSettingTab {
             debounce(async (value) => {
               const parsedNumber = Number(value);
               if (!isPortNumber(parsedNumber)) {
-                new Notice("Port should be an integer");
+                this.notice = new Notice("Port should be an integer");
                 return;
               }
               this.plugin.settings.port = parsedNumber;
@@ -84,8 +85,8 @@ export class SlidevSettingTab extends PluginSettingTab {
       .setDesc("The script to load Node.js to PATH")
       .addText((text) =>
         text
-          .setPlaceholder(String(DEFAULT_SETTINGS.initialScript))
-          .setValue(String(this.plugin.settings.initialScript))
+          .setPlaceholder(DEFAULT_SETTINGS.initialScript)
+          .setValue(this.plugin.settings.initialScript)
           .onChange(
             debounce(async (value) => {
               this.plugin.settings.initialScript = value;
@@ -101,8 +102,8 @@ export class SlidevSettingTab extends PluginSettingTab {
       .setDesc("The template location used by Slidev")
       .addText((text) => {
         text
-          .setPlaceholder(String(DEFAULT_SETTINGS.slidevTemplateLocation))
-          .setValue(String(this.plugin.settings.slidevTemplateLocation))
+          .setPlaceholder(DEFAULT_SETTINGS.slidevTemplateLocation)
+          .setValue(this.plugin.settings.slidevTemplateLocation)
           .onChange(
             debounce(async (value) => {
               this.plugin.settings.slidevTemplateLocation = value;

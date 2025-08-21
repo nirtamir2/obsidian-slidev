@@ -1,9 +1,11 @@
-module.exports = {
+export default {
   plugins: [
-    require.resolve("prettier-plugin-packagejson"),
-    require.resolve("@trivago/prettier-plugin-sort-imports"),
-    require.resolve("prettier-plugin-tailwindcss"), // must come last
+    "prettier-plugin-packagejson",
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss", // must come last
   ],
+  // @see https://github.com/tailwindlabs/prettier-plugin-tailwindcss?tab=readme-ov-file#specifying-your-tailwind-stylesheet-path-tailwind-css-v4
+  tailwindStylesheet: "./src/styles.css",
   // pluginSearchDirs: false, // for prettier-plugin-tailwindcss to work with other plugins
   // @see https://github.com/tailwindlabs/prettier-plugin-tailwindcss#resolving-your-tailwind-configuration
   // tailwindConfig: "./tailwind.config.cjs",

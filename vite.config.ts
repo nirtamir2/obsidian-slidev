@@ -100,13 +100,13 @@ export default defineConfig(async ({ mode }) => {
   } satisfies UserConfig;
 });
 
-const inject = (files: Array<string>): Plugin | undefined => {
+const inject = (files: Array<string>): Plugin | null => {
   if (files.length > 0) {
     return {
       name: "inject-code",
       async load(this, id) {
         const info = this.getModuleInfo(id);
-        if (info != null && info.isEntry) {
+        if (info?.isEntry != null) {
           const code = await readFile(id, "utf8");
           const dir = path.dirname(id);
           const inject_code = files
@@ -119,9 +119,9 @@ const inject = (files: Array<string>): Plugin | undefined => {
           ${code}
           `;
         }
-        return undefined;
+        return null;
       },
     };
   }
-  return undefined;
+  return null;
 };

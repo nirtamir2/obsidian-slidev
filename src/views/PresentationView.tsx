@@ -47,6 +47,7 @@ export interface LogMessage {
 function createMessage(data: any) {
   return {
     type: "message" as const,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
     value: String(data.toString()),
   };
 }
@@ -61,7 +62,7 @@ function SlidevDebugHeader(props: {
   onOpenLog: () => void;
 }) {
   return (
-    <div class="sticky left-0 top-0 flex w-full items-center gap-3">
+    <div class="sticky top-0 left-0 flex w-full items-center gap-3">
       <button
         type="button"
         onClick={() => {
@@ -101,8 +102,7 @@ function SlidevFallback(props: {
       <div class="flex flex-col items-center gap-4">
         <div class="text-xl text-red-400">Slidev server is down</div>
         <div>
-          No server found at{" "}
-          <a href={props.slidevUrl}>{props.slidevUrl}</a>
+          No server found at <a href={props.slidevUrl}>{props.slidevUrl}</a>
         </div>
         <div>
           <button
@@ -147,11 +147,12 @@ function SlidevPresentation(props: {
       </h4>
 
       <iframe
+        // eslint-disable-next-line @eslint-react/dom/no-unsafe-iframe-sandbox
         sandbox="allow-scripts allow-same-origin"
+        src={props.src}
         title="Slidev presentation"
         class="size-full"
         id="iframe"
-        src={props.src}
       />
     </div>
   );
@@ -172,7 +173,8 @@ export const PresentationView = () => {
     Array<LogMessage>
   >([]);
 
-  const serverBaseUrl = () => `http://${localhost()}:${config.port}/`;
+  const serverBaseUrl = () =>
+    `http://${localhost()}:${config.port.toFixed(0)}/`;
 
   const [isServerUp, { refetch }] = createResource(
     serverBaseUrl,
@@ -188,7 +190,7 @@ export const PresentationView = () => {
   const commandLogModal = new CommandLogModal(app, commandLogMessages);
 
   const iframeSrcUrl = () => {
-    return `${serverBaseUrl()}${store.currentSlideNumber}?embedded=true`;
+    return `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}?embedded=true`;
   };
 
   function addLogListeners(command: ChildProcessWithoutNullStreams) {
@@ -271,14 +273,14 @@ export const PresentationView = () => {
 
   function handleOpenSlideUrl() {
     window.open(
-      `${serverBaseUrl()}${store.currentSlideNumber}`,
+      `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}`,
       "noopener=true,noreferrer=true",
     );
   }
 
   function handleOpenSlidePresenterUrl() {
     window.open(
-      `${serverBaseUrl()}presenter/${store.currentSlideNumber}`,
+      `${serverBaseUrl()}presenter/${store.currentSlideNumber.toFixed(0)}`,
       "noopener=true,noreferrer=true",
     );
   }
@@ -288,7 +290,9 @@ export const PresentationView = () => {
     const currentSlideFileName = activeFile == null ? "" : activeFile.basename;
 
     const slideNumber =
-      store.currentSlideNumber === 0 ? "" : ` #${store.currentSlideNumber}`;
+      store.currentSlideNumber === 0
+        ? ""
+        : ` #${store.currentSlideNumber.toFixed(0)}`;
 
     return `${currentSlideFileName}${slideNumber}`;
   };
