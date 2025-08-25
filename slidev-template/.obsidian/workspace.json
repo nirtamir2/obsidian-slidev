@@ -1,41 +1,52 @@
 {
   "main": {
-    "id": "4f0fe589de5c030d",
+    "id": "70412c69ff5c06e9",
     "type": "split",
     "children": [
       {
-        "id": "fce6fe079a220508",
+        "id": "82677182952fb70d",
         "type": "tabs",
         "children": [
           {
-            "id": "2c38eed3ed5d369f",
+            "id": "40850b53d3d45e18",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "slides.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "slides"
+              "title": "README"
+            }
+          },
+          {
+            "id": "9407545416b6b9eb",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
   },
   "left": {
-    "id": "e5ac6c42fd8ec3af",
+    "id": "bc12dbd82a979d58",
     "type": "split",
     "children": [
       {
-        "id": "f7c660fe3de28664",
+        "id": "0f8c50fc1ea5eedf",
         "type": "tabs",
         "children": [
           {
-            "id": "91c2129423248a1e",
+            "id": "e026c7ed457c587c",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -48,7 +59,7 @@
             }
           },
           {
-            "id": "8454d334c5caa50d",
+            "id": "3e872027dbfa1df5",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -65,7 +76,7 @@
             }
           },
           {
-            "id": "be8cb8316ff63834",
+            "id": "7c1484f153fbfec7",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -81,20 +92,19 @@
     "width": 300
   },
   "right": {
-    "id": "d61c2d3508db66ed",
+    "id": "804a21cba03920ed",
     "type": "split",
     "children": [
       {
-        "id": "849086c62ed7b4ba",
+        "id": "c52d7388e4044899",
         "type": "tabs",
         "children": [
           {
-            "id": "11e5d76036f64aeb",
+            "id": "5055cbcf2a925e1b",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "slides.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,25 +114,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for slides"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "884346df0fba8b80",
+            "id": "82eb8e4c26c0385b",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "slides.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from slides"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "6c1c7afa0b7bc77d",
+            "id": "cd53bc8cfc4821c6",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -137,7 +146,7 @@
             }
           },
           {
-            "id": "a098e60ba6a2e7a8",
+            "id": "52c32f730a5f80bc",
             "type": "leaf",
             "state": {
               "type": "outline",
@@ -152,7 +161,7 @@
             }
           },
           {
-            "id": "34a966eb807b7725",
+            "id": "cdd694302bc63146",
             "type": "leaf",
             "state": {
               "type": "slidev-presentation-view",
@@ -166,22 +175,23 @@
       }
     ],
     "direction": "horizontal",
-    "width": 786.5
+    "width": 830.5
   },
   "left-ribbon": {
     "hiddenItems": {
-      "bases:Create new base": false,
-      "slidev:Open Slidev Presentation View": false,
       "switcher:Open quick switcher": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "bases:Create new base": false,
+      "command-palette:Open command palette": false,
+      "slidev:Open Slidev Presentation View": false
     }
   },
-  "active": "34a966eb807b7725",
+  "active": "9407545416b6b9eb",
   "lastOpenFiles": [
-    "screenshot.png"
+    "README.md",
+    "slides.md"
   ]
 }

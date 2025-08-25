@@ -21,14 +21,14 @@ export default defineConfig(async ({ mode }) => {
   let { OUT_DIR } = loadEnv(mode, process.cwd(), ["OUT_"]);
 
   OUT_DIR = path.normalize(OUT_DIR!);
-  if (OUT_DIR !== "dist" && OUT_DIR !== path.join(process.cwd(), "dist")) {
-    await rm("dist", { recursive: true });
-    exec(
-      process.platform === "win32"
-        ? `mklink /J dist ${OUT_DIR}`
-        : `ln -s ${OUT_DIR} dist`,
-    );
-  }
+  // if (OUT_DIR !== "dist" && OUT_DIR !== path.join(process.cwd(), "dist")) {
+  //   await rm("dist", { recursive: true });
+  //   exec(
+  //     process.platform === "win32"
+  //       ? `mklink /J dist ${OUT_DIR}`
+  //       : `ln -s ${OUT_DIR} dist`,
+  //   );
+  // }
 
   return {
     plugins: [
@@ -54,8 +54,8 @@ export default defineConfig(async ({ mode }) => {
       minify: prod,
       sourcemap: prod ? false : "inline",
       cssCodeSplit: false,
-      emptyOutDir: false,
-      // outDir: '',
+      emptyOutDir: true,
+      outDir: OUT_DIR,
       rollupOptions: {
         output: {
           exports: "named",

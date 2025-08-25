@@ -24,7 +24,9 @@ const localhost = () => "localhost"; //`127.0.0.1`;
 
 async function fetchIsServerUp(serverBaseUrl: string): Promise<boolean> {
   try {
-    const response = await fetch(`${serverBaseUrl}index.html`);
+    const response = await fetch(`${serverBaseUrl}index.html`, {
+      mode: "no-cors",
+    });
     try {
       await response.text();
       return true;

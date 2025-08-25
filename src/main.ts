@@ -82,7 +82,7 @@ export default class SlidevPlugin extends Plugin {
     );
 
     if (import.meta.env.DEV) {
-      window.hmr(this);
+      // window.hmr(this);
     }
   }
 
