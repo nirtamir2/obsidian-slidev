@@ -19,6 +19,7 @@ import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
 import { RibbonButton } from "./icons/RibbonButton";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
+import { Notice } from "obsidian";
 
 const localhost = () => "localhost"; //`127.0.0.1`;
 
@@ -127,6 +128,7 @@ function SlidevPresentation(props: {
   onOpenSlideUrl: () => void;
   onOpenSlidevPresenterUrl: () => void;
   src: string;
+  slidevStartCommand: string;
 }) {
   return (
     <div class="flex h-full flex-col">
@@ -144,6 +146,14 @@ function SlidevPresentation(props: {
             onClick={props.onOpenSlidevPresenterUrl}
           >
             <GanttChartSquareIcon />
+          </RibbonButton>
+          <RibbonButton
+            label={props.slidevStartCommand}
+            onClick={() => {
+              void new Notice(props.slidevStartCommand);
+            }}
+          >
+            Command
           </RibbonButton>
         </div>
       </h4>
@@ -287,6 +297,11 @@ export const PresentationView = () => {
     );
   }
 
+  const slidevStartCommand = () => {
+    const activeFile = app.workspace.getActiveFile();
+    return `npm run slidev ${activeFile} -- --port ${config.port.toFixed(0)}`;
+  };
+
   const title = () => {
     const activeFile = app.workspace.getActiveFile();
     const currentSlideFileName = activeFile == null ? "" : activeFile.basename;
@@ -329,6 +344,7 @@ export const PresentationView = () => {
           <SlidevPresentation
             title={title()}
             src={iframeSrcUrl()}
+            slidevStartCommand={slidevStartCommand()}
             onOpenSlideUrl={handleOpenSlideUrl}
             onOpenSlidevPresenterUrl={handleOpenSlidePresenterUrl}
           />
