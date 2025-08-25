@@ -60,7 +60,7 @@ export default defineConfig(async ({ mode }) => {
         output: {
           exports: "named",
           assetFileNames: (v: { name: string }) =>
-            v.name === "style.css" ? "styles.css" : v.name,
+            v.name === "obsidian-slidev.css" ? "styles.css" : v.name,
           banner,
         } as NonNullable<
           NonNullable<

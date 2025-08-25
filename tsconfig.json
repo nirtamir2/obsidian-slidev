@@ -8,7 +8,7 @@
     "target": "ES2021",
     "allowJs": true,
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,
