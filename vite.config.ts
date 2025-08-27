@@ -1,7 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import builtins from "builtin-modules";
-import { exec } from "node:child_process";
-import { readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin, UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";

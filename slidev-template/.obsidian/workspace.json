@@ -25,10 +25,14 @@
             "id": "9407545416b6b9eb",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "slides.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "slides"
             }
           }
         ],
@@ -161,7 +165,7 @@
             }
           },
           {
-            "id": "cdd694302bc63146",
+            "id": "b48c1baa4f9c982c",
             "type": "leaf",
             "state": {
               "type": "slidev-presentation-view",
@@ -189,8 +193,9 @@
       "slidev:Open Slidev Presentation View": false
     }
   },
-  "active": "9407545416b6b9eb",
+  "active": "b48c1baa4f9c982c",
   "lastOpenFiles": [
+    "pnpm-lock.yaml",
     "README.md",
     "slides.md"
   ]
