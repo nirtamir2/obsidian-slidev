@@ -1,7 +1,7 @@
 import { platform } from "node:os";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
-import type main from "./main";
+import type { SlidevPlugin } from "./SlidevPlugin";
 import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 
 export interface SlidevPluginSettings {
@@ -27,9 +27,9 @@ function isPortNumber(parsedNumber: number) {
 }
 
 export class SlidevSettingTab extends PluginSettingTab {
-  plugin: main;
+  plugin: SlidevPlugin;
 
-  constructor(app: App, plugin: main) {
+  constructor(app: App, plugin: SlidevPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
