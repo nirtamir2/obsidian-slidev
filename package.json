@@ -1,15 +1,16 @@
 {
   "name": "obsidian-slidev",
+  "type": "module",
   "version": "0.0.8",
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
   "description": "Create Markdown-based presentations in Obsidian using slidev",
-  "keywords": [],
+  "author": "Nir Tamir <nirtamir2@gmail.com>",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/nirtamir2/obsidian-slidev"
   },
-  "license": "MIT",
-  "author": "Nir Tamir <nirtamir2@gmail.com>",
-  "type": "module",
+  "keywords": [],
   "main": "main.js",
   "scripts": {
     "build": "vite build",
@@ -57,6 +58,5 @@
     "vite": "^7.1.3",
     "vite-plugin-solid": "^2.11.8",
     "vite-plugin-static-copy": "^3.1.2"
-  },
-  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
+  }
 }
