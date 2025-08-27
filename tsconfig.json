@@ -12,6 +12,7 @@
     "allowJs": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
+    "noUnusedLocals": false,
     "importHelpers": true,
     "inlineSourceMap": true,
     "inlineSources": true,

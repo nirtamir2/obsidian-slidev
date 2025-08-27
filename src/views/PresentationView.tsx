@@ -303,7 +303,10 @@ export const PresentationView = () => {
 
   const slidevStartCommand = () => {
     const activeFile = app.workspace.getActiveFile();
-    return `npm run slidev ${activeFile} -- --port ${config.port.toFixed(0)}`;
+    if (activeFile == null) {
+      return `No active file`;
+    }
+    return `npm run dev ${activeFile.path} -- --port ${config.port.toFixed(0)}`;
   };
 
   const title = () => {

@@ -165,7 +165,7 @@
             }
           },
           {
-            "id": "b48c1baa4f9c982c",
+            "id": "fabe5feb358b8913",
             "type": "leaf",
             "state": {
               "type": "slidev-presentation-view",
@@ -193,10 +193,10 @@
       "slidev:Open Slidev Presentation View": false
     }
   },
-  "active": "b48c1baa4f9c982c",
+  "active": "fabe5feb358b8913",
   "lastOpenFiles": [
-    "pnpm-lock.yaml",
     "README.md",
-    "slides.md"
+    "slides.md",
+    "pnpm-lock.yaml"
   ]
 }

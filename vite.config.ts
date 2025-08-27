@@ -101,6 +101,7 @@ export default defineConfig(async ({ mode }) => {
   } satisfies UserConfig;
 });
 
+// eslint-disable-next-line unused-imports/no-unused-vars, @typescript-eslint/no-unused-vars
 const inject = (files: Array<string>): Plugin | null => {
   if (files.length > 0) {
     return {
