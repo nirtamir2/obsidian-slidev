@@ -17,7 +17,7 @@
     "dev": "vite build -w -m development",
     "es-dev": "node esbuild.config.mjs",
     "format": "prettier \"**/*\" --write --ignore-unknown",
-    "lint": "eslint --fix \"**/*.{ts,tsx,js,jsx}\"",
+    "lint": "eslint --fix \"**/*.{ts,tsx,js,jsx,json}\"",
     "type-check": "tsc --pretty --noEmit",
     "version": "node version-bump.mjs"
   },
