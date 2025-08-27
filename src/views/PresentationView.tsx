@@ -1,4 +1,5 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
+import { Notice } from "obsidian";
 import {
   Show,
   Suspense,
@@ -14,12 +15,12 @@ import { CommandLog } from "./CommandLog";
 import { CommandLogModal } from "./CommandLogModal";
 import { SlidevStoreContext } from "./SlidevStoreContext";
 import { createStartServerCommand } from "./createStartServerCommand";
+import { ClipboardIcon } from "./icons/ClipboardIcon";
 import { GanttChartSquareIcon } from "./icons/GanttChartSquareIcon";
 import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
 import { RibbonButton } from "./icons/RibbonButton";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
-import { Notice } from "obsidian";
 
 const localhost = () => "localhost"; //`127.0.0.1`;
 
@@ -148,12 +149,13 @@ function SlidevPresentation(props: {
             <GanttChartSquareIcon />
           </RibbonButton>
           <RibbonButton
-            label={props.slidevStartCommand}
+            label="Copy slidev start command to clipboard"
             onClick={() => {
-              void new Notice(props.slidevStartCommand);
+              void navigator.clipboard.writeText(props.slidevStartCommand);
+              new Notice(`Copied ${props.slidevStartCommand} to clipboard`);
             }}
           >
-            Command
+            <ClipboardIcon />
           </RibbonButton>
         </div>
       </h4>
