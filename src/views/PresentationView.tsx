@@ -152,7 +152,9 @@ function SlidevPresentation(props: {
             label="Copy slidev start command to clipboard"
             onClick={() => {
               void navigator.clipboard.writeText(props.slidevStartCommand);
-              new Notice(`Copied ${props.slidevStartCommand} to clipboard`);
+              void new Notice(
+                `Copied ${props.slidevStartCommand} to clipboard`,
+              );
             }}
           >
             <ClipboardIcon />

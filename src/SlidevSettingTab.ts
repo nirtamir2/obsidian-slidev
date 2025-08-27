@@ -28,7 +28,6 @@ function isPortNumber(parsedNumber: number) {
 
 export class SlidevSettingTab extends PluginSettingTab {
   plugin: main;
-  notice: Notice | null = null;
 
   constructor(app: App, plugin: main) {
     super(app, plugin);
@@ -55,7 +54,7 @@ export class SlidevSettingTab extends PluginSettingTab {
             debounce(async (value) => {
               const parsedNumber = Number(value);
               if (!isPortNumber(parsedNumber)) {
-                this.notice = new Notice("Port should be an integer");
+                void new Notice("Port should be an integer");
                 return;
               }
               this.plugin.settings.port = parsedNumber;

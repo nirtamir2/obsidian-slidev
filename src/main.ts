@@ -14,7 +14,6 @@ import {
 
 export default class SlidevPlugin extends Plugin {
   settings: SlidevPluginSettings = DEFAULT_SETTINGS;
-  notice: Notice | null = null;
   // server: Awaited<ReturnType<typeof createServer>> | null = null;
 
   constructor(app: App, manifest: PluginManifest) {
@@ -89,7 +88,7 @@ export default class SlidevPlugin extends Plugin {
   async #handleOpenPresentationView() {
     const { slidevTemplateLocation } = this.settings;
     if (!(await isSlidevCommandExistsInLocation(slidevTemplateLocation))) {
-      this.notice = new Notice(`slidev not found in ${slidevTemplateLocation}`);
+      void new Notice(`slidev not found in ${slidevTemplateLocation}`);
       return;
     }
     void this.#activateView();

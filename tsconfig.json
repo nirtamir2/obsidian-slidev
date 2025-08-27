@@ -1,21 +1,21 @@
 {
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "module": "ESNext",
     "target": "ES2021",
-    "allowJs": true,
-    "noImplicitAny": true,
-    "moduleResolution": "nodenext",
-    "importHelpers": true,
-    "isolatedModules": true,
-    "strictNullChecks": true,
-    "lib": ["DOM", "ES2021"],
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "typeRoots": ["./typings", "./node_modules/@types"]
+    "lib": ["DOM", "ES2021"],
+    "baseUrl": ".",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "typeRoots": ["./typings", "./node_modules/@types"],
+    "allowJs": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "importHelpers": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "isolatedModules": true
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }
