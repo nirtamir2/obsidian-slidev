@@ -98,27 +98,68 @@ function SlidevDebugHeader(props: {
 function SlidevFallback(props: {
   commandLogMessages: Array<LogMessage>;
   slidevUrl: string;
+  activeFilePath: string | null;
+  slidevStartCommand: string;
   onStartServer: () => void;
+  onRefetch: () => void;
   onShowLog: () => void;
 }) {
   return (
     <div class="flex h-full items-center justify-center">
       <div class="flex flex-col items-center gap-4">
-        <div class="text-xl text-red-400">Slidev server is down</div>
-        <div>
-          No server found at <a href={props.slidevUrl}>{props.slidevUrl}</a>
-        </div>
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              props.onStartServer();
-            }}
-          >
-            Start slidev server
-          </button>
-        </div>
-        <CommandLog messages={props.commandLogMessages} />
+        <Show
+          when={props.activeFilePath != null}
+          fallback={
+            <>
+              <div class="text-xl text-red-400">No active file</div>
+              <div>
+                Please open a file first, then reopen the presentation view.
+              </div>
+            </>
+          }
+        >
+          <div class="text-xl text-red-400">Slidev server is not running</div>
+          <div>
+            No server found at <a href={props.slidevUrl}>{props.slidevUrl}</a>
+          </div>
+          <div class="text-balance">
+            To start it manually, run this command in your Slidev project
+            folder:
+          </div>
+          <div class="flex items-center gap-2">
+            <code class="text-balance">{props.slidevStartCommand}</code>
+            <RibbonButton
+              label="Copy slidev start command to clipboard"
+              onClick={() => {
+                void navigator.clipboard.writeText(props.slidevStartCommand);
+                void new Notice(
+                  `"${props.slidevStartCommand}" command copied to clipboard`,
+                );
+              }}
+            >
+              <ClipboardIcon />
+            </RibbonButton>
+          </div>
+          <div class="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                props.onRefetch();
+              }}
+            >
+              Refresh
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                props.onStartServer();
+              }}
+            >
+              Start slidev server
+            </button>
+          </div>
+          <CommandLog messages={props.commandLogMessages} />
+        </Show>
       </div>
     </div>
   );
@@ -321,6 +362,10 @@ export const PresentationView = () => {
     return `${currentSlideFileName}${slideNumber}`;
   };
 
+  function handleRefetch() {
+    void refetch();
+  }
+
   return (
     <Suspense
       fallback={
@@ -341,9 +386,12 @@ export const PresentationView = () => {
           when={isServerUp()}
           fallback={
             <SlidevFallback
+              activeFilePath={app.workspace.getActiveFile()?.path ?? null}
               commandLogMessages={commandLogMessages}
+              slidevStartCommand={slidevStartCommand()}
               slidevUrl={serverBaseUrl()}
               onStartServer={startSlidevServer}
+              onRefetch={handleRefetch}
               onShowLog={handleOpenLog}
             />
           }

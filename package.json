@@ -14,7 +14,7 @@
   "main": "main.js",
   "scripts": {
     "build": "vite build",
-    "ci": "pnpm run lint && pnpm run type-check && pnpm run format",
+    "ci": "pnpm run --parallel --aggregate-output \"/^(lint|format|type-check).*/\"",
     "dev": "vite build -w -m development",
     "es-dev": "node esbuild.config.mjs",
     "format": "prettier \"**/*\" --write --ignore-unknown",
