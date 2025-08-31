@@ -28,7 +28,7 @@ export function createStartServerCommand({
     config.initialScript,
     `cd ${templatePath}`,
     // If you use npm scripts, don't forget to add -- after the npm command:
-    `npm run slidev ${slidePathRelativeToTemplatePath} -- --port ${config.port}`,
+    `npm run dev ${slidePathRelativeToTemplatePath} -- --port ${config.port.toFixed(0)}`,
   ].join("\n");
 
   return spawn(codeBlockContent, [], {
