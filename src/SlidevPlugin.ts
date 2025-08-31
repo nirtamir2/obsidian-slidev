@@ -37,11 +37,11 @@ export class SlidevPlugin extends Plugin {
       (leaf) => new SlidevPresentationView(leaf, this.settings),
     );
 
-    this.registerMarkdownPostProcessor((_element, context) => {
-      const hrBlocks = document.querySelectorAll(".markdown-preview-view hr");
-      for (let index = 0; index < hrBlocks.length; index++) {
-        const hrBlock = hrBlocks.item(index) as HTMLElement;
-        context.addChild(new SlideBoundaryRender(hrBlock, index + 1));
+    let index = 1
+    this.registerMarkdownPostProcessor((element, context) => {
+      if (element.classList.contains("el-hr")) {
+        index = index + 1;
+        context.addChild(new SlideBoundaryRender(element, index));
       }
     });
 
