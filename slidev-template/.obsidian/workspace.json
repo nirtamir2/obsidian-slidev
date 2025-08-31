@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "slides.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "slides"
+              "title": "README"
             }
           }
         ],
@@ -165,7 +165,7 @@
             }
           },
           {
-            "id": "cc1fb57b601f309d",
+            "id": "b8a7d1ded7379356",
             "type": "leaf",
             "state": {
               "type": "slidev-presentation-view",
@@ -193,15 +193,10 @@
       "slidev:Open Slidev Presentation View": false
     }
   },
-  "active": "cc1fb57b601f309d",
+  "active": "9407545416b6b9eb",
   "lastOpenFiles": [
-    "snippets/external.ts",
-    "snippets",
-    "pages/imported-slides.md",
-    "pages/multiple-entries.md",
-    "package-lock.json",
-    "README.md",
     "slides.md",
+    "README.md",
     "pnpm-lock.yaml"
   ]
 }

@@ -14,7 +14,7 @@ export class CommandLogModal extends Modal {
     this.messages = messages;
   }
 
-  override async onOpen() {
+  override onOpen() {
     this.#dispose = createRoot((dispose) => {
       const element = this.contentEl;
       insert(

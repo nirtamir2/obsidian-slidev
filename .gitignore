@@ -13,10 +13,6 @@ node_modules
 main.js
 styles.css
 
-# The plugins in the app
-example/.obsidian
-example/workspace.json
-
 # Exclude sourcemaps
 *.map
 

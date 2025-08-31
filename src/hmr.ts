@@ -2,12 +2,13 @@ import path from "node:path";
 import type { Plugin } from "obsidian";
 import { Platform, debounce } from "obsidian";
 
+interface HmrOptions {
+  watchFiles?:
+    | Array<"main.js" | "manifest.json" | "styles.css">
+    | Array<string>;
+}
+
 declare global {
-  interface HmrOptions {
-    watchFiles?:
-      | Array<"main.js" | "manifest.json" | "styles.css">
-      | Array<string>;
-  }
   interface Window {
     hmr(plugin: Plugin, options?: HmrOptions): void;
   }
@@ -36,7 +37,7 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
   } = plugin;
 
   if (pluginDir == null) {
-    throw new Error(`hmr.ts - pluginDir "${pluginDir}" not found.`);
+    throw new Error(`hmr.ts - pluginDir not found.`);
   }
 
   const restartPlugin = async () => {
@@ -47,10 +48,10 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
       await plugins.disablePlugin(id);
       await plugins.enablePlugin(id);
     } finally {
-      if (oldDebug) {
-        localStorage.setItem(dbgKey, oldDebug);
-      } else {
+      if (oldDebug == null) {
         localStorage.removeItem(dbgKey);
+      } else {
+        localStorage.setItem(dbgKey, oldDebug);
       }
     }
   };

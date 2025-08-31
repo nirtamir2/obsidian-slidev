@@ -1,7 +1,5 @@
 .editorconfig
 slidev-template
-example/.obsidian
-example
 styles.css
 main.js
 manifest.json

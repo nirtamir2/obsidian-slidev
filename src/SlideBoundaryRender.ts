@@ -10,7 +10,7 @@ export class SlideBoundaryRender extends MarkdownRenderChild {
 
   override onload() {
     const slideNumberElement = this.containerEl.createSpan({
-      text: `(#${this.slideNumber})`,
+      text: `(#${this.slideNumber.toFixed(0)})`,
     });
     slideNumberElement.style.position = "absolute";
     slideNumberElement.style.top = "-0.8rem";

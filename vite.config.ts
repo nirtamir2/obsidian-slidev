@@ -1,6 +1,6 @@
+import tailwindcss from "@tailwindcss/vite";
 import builtins from "builtin-modules";
-import { exec } from "node:child_process";
-import { readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin, UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";
@@ -20,18 +20,19 @@ export default defineConfig(async ({ mode }) => {
   let { OUT_DIR } = loadEnv(mode, process.cwd(), ["OUT_"]);
 
   OUT_DIR = path.normalize(OUT_DIR!);
-  if (OUT_DIR !== "dist" && OUT_DIR !== path.join(process.cwd(), "dist")) {
-    await rm("dist", { recursive: true });
-    exec(
-      process.platform === "win32"
-        ? `mklink /J dist ${OUT_DIR}`
-        : `ln -s ${OUT_DIR} dist`,
-    );
-  }
+  // if (OUT_DIR !== "dist" && OUT_DIR !== path.join(process.cwd(), "dist")) {
+  //   await rm("dist", { recursive: true });
+  //   exec(
+  //     process.platform === "win32"
+  //       ? `mklink /J dist ${OUT_DIR}`
+  //       : `ln -s ${OUT_DIR} dist`,
+  //   );
+  // }
 
   return {
     plugins: [
       solidPlugin(),
+      tailwindcss(),
       viteStaticCopy({
         targets: [
           {
@@ -40,7 +41,7 @@ export default defineConfig(async ({ mode }) => {
           },
         ],
       }),
-      prod ? undefined : inject(["src/hmr.ts"]),
+      // prod ? undefined : inject(["./src/hmr.ts"]),
     ],
     build: {
       lib: {
@@ -52,13 +53,13 @@ export default defineConfig(async ({ mode }) => {
       minify: prod,
       sourcemap: prod ? false : "inline",
       cssCodeSplit: false,
-      emptyOutDir: false,
-      // outDir: '',
+      emptyOutDir: true,
+      outDir: OUT_DIR,
       rollupOptions: {
         output: {
           exports: "named",
           assetFileNames: (v: { name: string }) =>
-            v.name === "style.css" ? "styles.css" : v.name,
+            v.name === "obsidian-slidev.css" ? "styles.css" : v.name,
           banner,
         } as NonNullable<
           NonNullable<
@@ -100,13 +101,14 @@ export default defineConfig(async ({ mode }) => {
   } satisfies UserConfig;
 });
 
-const inject = (files: Array<string>): Plugin | undefined => {
+// eslint-disable-next-line unused-imports/no-unused-vars, @typescript-eslint/no-unused-vars
+const inject = (files: Array<string>): Plugin | null => {
   if (files.length > 0) {
     return {
       name: "inject-code",
       async load(this, id) {
         const info = this.getModuleInfo(id);
-        if (info != null && info.isEntry) {
+        if (info?.isEntry != null) {
           const code = await readFile(id, "utf8");
           const dir = path.dirname(id);
           const inject_code = files
@@ -119,9 +121,9 @@ const inject = (files: Array<string>): Plugin | undefined => {
           ${code}
           `;
         }
-        return undefined;
+        return null;
       },
     };
   }
-  return undefined;
+  return null;
 };
