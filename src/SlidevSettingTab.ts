@@ -9,6 +9,7 @@ export interface SlidevPluginSettings {
   initialScript: string;
   isDebug: boolean;
   slidevTemplateLocation: string;
+  shouldRenderSlideNumberInMarkdownPreview: boolean;
 }
 
 const isWindows = platform() === "win32";
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: SlidevPluginSettings = {
   initialScript: isWindows ? "" : "source $HOME/.profile",
   isDebug: false,
   slidevTemplateLocation: "",
+  shouldRenderSlideNumberInMarkdownPreview: false,
 };
 
 function isPortNumber(parsedNumber: number) {
@@ -39,6 +41,7 @@ export class SlidevSettingTab extends PluginSettingTab {
     this.addPortSetting();
     this.addSlidevTemplateLocationSetting();
     this.addInitialScriptSetting();
+    this.addShouldRenderSlideNumberInMarkdownPreviewSetting();
     this.addDebugModeSetting();
   }
 
@@ -72,6 +75,20 @@ export class SlidevSettingTab extends PluginSettingTab {
         value.setValue(this.plugin.settings.isDebug).onChange(
           debounce(async (value) => {
             this.plugin.settings.isDebug = value;
+            await this.plugin.saveSettings();
+          }, 750),
+        ),
+      );
+  }
+  
+  private addShouldRenderSlideNumberInMarkdownPreviewSetting() {
+    new Setting(this.containerEl)
+      .setName("Markdown preview slide number")
+      .setDesc("Should render slide number in markdown preview")
+      .addToggle((value) =>
+        value.setValue(this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview).onChange(
+          debounce(async (value) => {
+            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview = value;
             await this.plugin.saveSettings();
           }, 750),
         ),

@@ -37,13 +37,16 @@ export class SlidevPlugin extends Plugin {
       (leaf) => new SlidevPresentationView(leaf, this.settings),
     );
 
-    let index = 1
-    this.registerMarkdownPostProcessor((element, context) => {
-      if (element.classList.contains("el-hr")) {
-        index = index + 1;
-        context.addChild(new SlideBoundaryRender(element, index));
-      }
-    });
+
+    if (this.settings.shouldRenderSlideNumberInMarkdownPreview) {
+      let index = 1
+      this.registerMarkdownPostProcessor((element, context) => {
+        if (element.classList.contains("el-hr")) {
+          index = index + 1;
+          context.addChild(new SlideBoundaryRender(element, index));
+        }
+      });
+    }
 
     // const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     // if (view == null) {
