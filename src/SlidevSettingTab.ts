@@ -1,6 +1,11 @@
-import { platform } from "node:os";
 import type { App } from "obsidian";
-import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
+import {
+  Notice,
+  Platform,
+  PluginSettingTab,
+  Setting,
+  debounce,
+} from "obsidian";
 import type { SlidevPlugin } from "./SlidevPlugin";
 import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 
@@ -12,11 +17,9 @@ export interface SlidevPluginSettings {
   shouldRenderSlideNumberInMarkdownPreview: boolean;
 }
 
-const isWindows = platform() === "win32";
-
 export const DEFAULT_SETTINGS: SlidevPluginSettings = {
   port: 3030,
-  initialScript: isWindows ? "" : "source $HOME/.profile",
+  initialScript: Platform.isWin ? "" : "source $HOME/.profile",
   isDebug: false,
   slidevTemplateLocation: "",
   shouldRenderSlideNumberInMarkdownPreview: false,
@@ -80,18 +83,23 @@ export class SlidevSettingTab extends PluginSettingTab {
         ),
       );
   }
-  
+
   private addShouldRenderSlideNumberInMarkdownPreviewSetting() {
     new Setting(this.containerEl)
       .setName("Markdown preview slide number")
       .setDesc("Should render slide number in markdown preview")
       .addToggle((value) =>
-        value.setValue(this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview).onChange(
-          debounce(async (value) => {
-            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview = value;
-            await this.plugin.saveSettings();
-          }, 750),
-        ),
+        value
+          .setValue(
+            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview,
+          )
+          .onChange(
+            debounce(async (value) => {
+              this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview =
+                value;
+              await this.plugin.saveSettings();
+            }, 750),
+          ),
       );
   }
 

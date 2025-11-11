@@ -38,7 +38,7 @@ export class SlidevPresentationView extends ItemView {
   }
 
   getDisplayText() {
-    return "Slidev Presentation View";
+    return "Slidev presentation view";
   }
 
   override async onOpen() {

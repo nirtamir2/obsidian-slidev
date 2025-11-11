@@ -1,4 +1,4 @@
-# Obsidian Slidev Plugin
+# Slidev Plugin
 
 This is [obsidian](https://obsidian.md) plugin that integrates [slidev](https://github.com/slidevjs/slidev) presentations.
 
