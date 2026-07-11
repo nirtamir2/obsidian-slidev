@@ -24,15 +24,18 @@ export function CommandLog(props: Props) {
   );
 
   return (
-    <ul ref={setListRef} class="max-h-96 overflow-auto rounded border p-0">
-      <For each={props.messages} fallback={<div>Log is empty</div>}>
+    <ul ref={setListRef} class="slidev-command-log">
+      <For
+        each={props.messages}
+        fallback={<li class="slidev-command-log-empty">Log is empty</li>}
+      >
         {(message) => {
           const isError = message.type === "error";
           return (
             <li
               classList={{
-                "list-none whitespace-pre-wrap font-mono": true,
-                "text-red-500": isError,
+                "slidev-command-log-item": true,
+                "slidev-command-log-item--error": isError,
               }}
             >
               {message.value}

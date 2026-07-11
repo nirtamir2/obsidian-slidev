@@ -25,6 +25,8 @@ Acceptance criteria:
 
 - Only a project-local `@slidev/cli` is accepted.
 - Node and CLI are invoked with an argument array and `shell: false`.
+- An external vault note is imported through a temporary project-local entry,
+  with a scoped Vite bridge for vault assets.
 - A fake CLI starts end to end and receives unchanged paths and port.
 
 Verification: focused launcher tests, then `pnpm run type-check`
@@ -94,13 +96,14 @@ Verification: local equivalents pass; workflow syntax is validated
 
 ## Risks and mitigations
 
-| Risk | Mitigation |
-| --- | --- |
-| GUI `PATH` omits Node | Optional absolute Node executable setting |
-| Slidev changes its bin path | Read the installed package's `bin` metadata |
-| Malicious package metadata escapes its directory | Enforce resolved-path containment |
-| Existing server uses the configured port | Probe first and reuse it |
-| Windows process behavior differs | No `.cmd` wrapper; CI tests direct Node args |
+| Risk                                             | Mitigation                                   |
+| ------------------------------------------------ | -------------------------------------------- |
+| GUI `PATH` omits Node                            | Optional absolute Node executable setting    |
+| Slidev changes its bin path                      | Read the installed package's `bin` metadata  |
+| Malicious package metadata escapes its directory | Enforce resolved-path containment            |
+| Existing server uses the configured port         | Probe first and reuse it                     |
+| Windows process behavior differs                 | No `.cmd` wrapper; CI tests direct Node args |
+| Vault lives outside the Slidev project           | Project entry plus scoped Vite asset bridge  |
 
 ## Open questions
 

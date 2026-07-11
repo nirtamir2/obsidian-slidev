@@ -1,35 +1,25 @@
-import { parse } from "@slidev/parser";
-import path from "node:path";
-import type { App, PluginManifest } from "obsidian";
-import { MarkdownView, Notice, Plugin, debounce } from "obsidian";
-import { SlideBoundaryRender } from "./SlideBoundaryRender";
-import type { SlidevPluginSettings } from "./SlidevSettingTab";
-import { DEFAULT_SETTINGS, SlidevSettingTab } from "./SlidevSettingTab";
+import { MarkdownView, Plugin, TFile, debounce } from "obsidian";
+import {
+  SLIDEV_SETTINGS_CHANGED_EVENT,
+  SlideBoundaryRender,
+} from "./SlideBoundaryRender";
+import { SlidevSettingTab } from "./SlidevSettingTab";
+import type { SlidevPluginSettings } from "./settings";
+import { DEFAULT_SETTINGS, normalizeSettings } from "./settings";
+import { parseSlideRanges } from "./slides/slideRanges";
 import "./styles.css";
-import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
 import {
   SLIDEV_PRESENTATION_VIEW_TYPE,
   SlidevPresentationView,
 } from "./views/SlidevPresentationView";
+import { activateSlidevView } from "./views/activateSlidevView";
 
 export class SlidevPlugin extends Plugin {
-  settings: SlidevPluginSettings = DEFAULT_SETTINGS;
-  // server: Awaited<ReturnType<typeof createServer>> | null = null;
-
-  constructor(app: App, manifest: PluginManifest) {
-    super(app, manifest);
-
-    this.saveSettings = debounce(
-      this.saveSettings.bind(this),
-      1000,
-      true,
-    ) as unknown as typeof this.saveSettings;
-  }
+  settings: SlidevPluginSettings = { ...DEFAULT_SETTINGS };
 
   override async onload() {
-    await this.#loadSettings();
+    await this.loadSettings();
 
-    // This adds a settings tab so the user can configure various aspects of the plugin
     this.addSettingTab(new SlidevSettingTab(this.app, this));
 
     this.registerView(
@@ -37,26 +27,15 @@ export class SlidevPlugin extends Plugin {
       (leaf) => new SlidevPresentationView(leaf, this.settings),
     );
 
+    this.registerSlideNumberPostProcessor();
+    this.registerEvent(
+      this.app.workspace.on("file-open", () => {
+        this.updateOpenViewsSlide(1);
+      }),
+    );
 
-    if (this.settings.shouldRenderSlideNumberInMarkdownPreview) {
-      let index = 1
-      this.registerMarkdownPostProcessor((element, context) => {
-        if (element.classList.contains("el-hr")) {
-          index = index + 1;
-          context.addChild(new SlideBoundaryRender(element, index));
-        }
-      });
-    }
-
-    // const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    // if (view == null) {
-    // 	return;
-    // }
-
-    // This creates an icon in the left ribbon.
-
-    this.addRibbonIcon("presentation", "Open Slidev Presentation View", () => {
-      void this.#activateView();
+    this.addRibbonIcon("presentation", "Open Slidev presentation view", () => {
+      void this.activateView();
     }).addClass("slidev-plugin-ribbon-class");
 
     this.addCommand({
@@ -64,119 +43,127 @@ export class SlidevPlugin extends Plugin {
       name: "Open presentation view",
       icon: "presentation",
       callback: () => {
-        void this.#handleOpenPresentationView();
+        void this.activateView();
       },
     });
 
-    // TODO: use different event for it instead of just click. Maybe keydown too.
-    // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-    // Using this function will automatically remove the event listener when this plugin is disabled.
-    this.registerDomEvent(document, "click", async () => {
-      await this.#navigateToCurrentSlide();
+    this.registerDomEvent(document, "click", () => {
+      this.navigateToCurrentSlide();
     });
 
     this.registerDomEvent(
       document,
       "keydown",
-      debounce(async () => {
-        await this.#navigateToCurrentSlide();
+      debounce(() => {
+        this.navigateToCurrentSlide();
       }, 100),
     );
-
-    if (import.meta.env.DEV) {
-      // window.hmr(this);
-    }
   }
 
-  async #handleOpenPresentationView() {
-    const { slidevTemplateLocation } = this.settings;
-    if (!(await isSlidevCommandExistsInLocation(slidevTemplateLocation))) {
-      void new Notice(`slidev not found in ${slidevTemplateLocation}`);
-      return;
-    }
-    void this.#activateView();
+  private registerSlideNumberPostProcessor() {
+    const slideRangesByFile = new WeakMap<
+      TFile,
+      {
+        modifiedAt: number;
+        ranges: Promise<ReturnType<typeof parseSlideRanges>>;
+      }
+    >();
+    const loadSlideRanges = async (file: TFile) => {
+      const source = await this.app.vault.cachedRead(file);
+      return parseSlideRanges(source);
+    };
+    const getSlideRanges = async (file: TFile) => {
+      const cached = slideRangesByFile.get(file);
+      if (cached?.modifiedAt === file.stat.mtime) {
+        return await cached.ranges;
+      }
+
+      const ranges = loadSlideRanges(file);
+      slideRangesByFile.set(file, {
+        modifiedAt: file.stat.mtime,
+        ranges,
+      });
+      return await ranges;
+    };
+
+    this.registerMarkdownPostProcessor(async (element, context) => {
+      if (!element.classList.contains("el-hr")) {
+        return;
+      }
+
+      const section = context.getSectionInfo(element);
+      const file = this.app.vault.getAbstractFileByPath(context.sourcePath);
+      if (section == null || !(file instanceof TFile)) {
+        return;
+      }
+
+      const resolvedSlideRanges = await getSlideRanges(file);
+      const nextSlide = resolvedSlideRanges.find(
+        (slide) =>
+          slide.index > 0 &&
+          (slide.start === section.lineStart ||
+            slide.start === section.lineStart + 1),
+      );
+      if (nextSlide == null) {
+        return;
+      }
+
+      context.addChild(
+        new SlideBoundaryRender(element, {
+          shouldRender: () =>
+            this.settings.shouldRenderSlideNumberInMarkdownPreview,
+          slideNumber: nextSlide.index + 1,
+          workspace: this.app.workspace,
+        }),
+      );
+    });
   }
 
-  async #navigateToCurrentSlide() {
+  private navigateToCurrentSlide() {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (view == null) {
+    if (view?.file == null) {
       return;
     }
 
     const cursor = view.editor.getCursor();
-    const { line } = cursor;
-    const text = view.editor.getValue();
-    if (view.file == null) {
-      throw new Error("navigateToCurrentSlide - view not found");
-    }
-    const parsedView = await parse(text, view.file.path);
-    const currentSlide = parsedView.slides.find((slide) => {
-      return slide.start <= line && slide.end >= line;
-    });
-    const slideIndex = currentSlide == null ? 0 : currentSlide.index + 1;
+    const slideRanges = parseSlideRanges(view.editor.getValue());
+    const currentSlide = slideRanges.find(
+      (slide) => slide.start <= cursor.line && slide.end >= cursor.line,
+    );
+    const slideIndex = currentSlide == null ? 1 : currentSlide.index + 1;
 
-    const viewInstance = this.#getViewInstance();
-    if (viewInstance != null) {
-      viewInstance.onChangeLine(slideIndex);
-    }
-
-    // const lineCount = view.editor.lineCount();
-    // console.log("view.editor.getValue()", text);
-    // console.log({ slideIndex, line, currentSlide });
+    this.updateOpenViewsSlide(slideIndex);
   }
 
-  #getViewInstance(): SlidevPresentationView | null {
+  private updateOpenViewsSlide(slideNumber: number) {
     for (const leaf of this.app.workspace.getLeavesOfType(
       SLIDEV_PRESENTATION_VIEW_TYPE,
     )) {
-      const { view } = leaf;
-      if (view instanceof SlidevPresentationView) {
-        return view;
+      if (leaf.view instanceof SlidevPresentationView) {
+        leaf.view.onChangeLine(slideNumber);
       }
     }
-    return null;
   }
 
-  async #activateView() {
-    this.app.workspace.detachLeavesOfType(SLIDEV_PRESENTATION_VIEW_TYPE);
-
-    const leaf = this.app.workspace.getRightLeaf(false);
-    if (leaf != null) {
-      await leaf.setViewState({
-        type: SLIDEV_PRESENTATION_VIEW_TYPE,
-        active: true,
-      });
-    }
-
-    const viewLeaf = this.app.workspace.getLeavesOfType(
-      SLIDEV_PRESENTATION_VIEW_TYPE,
-    )[0];
-
-    if (viewLeaf == null) {
-      return;
-    }
-    await this.app.workspace.revealLeaf(viewLeaf);
+  private async activateView() {
+    await activateSlidevView(this.app.workspace, SLIDEV_PRESENTATION_VIEW_TYPE);
   }
 
-  async #loadSettings() {
-    this.settings = Object.assign(
-      {},
-      {
-        ...DEFAULT_SETTINGS,
-        slidevTemplateLocation: path.join(
-          this.app.vault.configDir,
-          "plugins",
-          "slidev",
-          "slidev-template",
-        ),
-      },
-      (await this.loadData()) as SlidevPluginSettings,
-    );
+  private async loadSettings() {
+    this.settings = normalizeSettings(await this.loadData());
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
-    this.onunload();
-    void this.onload();
+
+    for (const leaf of this.app.workspace.getLeavesOfType(
+      SLIDEV_PRESENTATION_VIEW_TYPE,
+    )) {
+      if (leaf.view instanceof SlidevPresentationView) {
+        leaf.view.updateSettings(this.settings);
+      }
+    }
+
+    this.app.workspace.trigger(SLIDEV_SETTINGS_CHANGED_EVENT);
   }
 }

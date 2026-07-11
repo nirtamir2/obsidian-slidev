@@ -58,10 +58,21 @@ A globally installed Slidev binary is never considered.
 
 ### Process launch
 
-The plugin starts Slidev as:
+Before launch, the plugin creates a unique temporary Markdown entry directly in
+the configured project. It imports the active vault note with Slidev's
+supported `src` frontmatter and carries over the note's deck headmatter on a
+separate disabled configuration slide. A matching temporary addon contributes
+a Vite configuration that allowlists the vault root, so note-relative assets
+remain available without loading the vault as an addon or replacing the
+project's own Vite configuration. Slidev therefore retains the configured
+project as its root and resolves that project's themes, addons, components,
+snippets, setup files, and public assets. Both temporary artifacts are removed
+on restart or close.
+
+The plugin then starts Slidev as:
 
 ```text
-<node> <local-slidev-bin> <absolute-entry> --port <port>
+<node> <local-slidev-bin> <project-local-temporary-entry> --port <port>
 ```
 
 It uses `child_process.spawn(executable, args, { cwd, shell: false })`. Paths are
@@ -72,7 +83,9 @@ global process listeners.
 
 ### Server connection
 
-The view probes `http://127.0.0.1:<port>/` with Obsidian `requestUrl`. When a
+The view probes `http://localhost:<port>/` with Obsidian `requestUrl`. Slidev's
+default development server may bind to the IPv6 loopback address, so forcing
+`127.0.0.1` would fail on otherwise healthy installations. When a
 server already responds, the view connects without requiring a local CLI and
 without spawning another process. When it is down, launch is attempted only
 after the active file and project setup have been diagnosed.
@@ -109,8 +122,11 @@ safe message is retained for diagnostics.
 The project path, Node path, and active note path are untrusted inputs. The
 launcher validates file boundaries and passes all values as argument-array
 entries with `shell: false`. It performs no package installation and no remote
-download. The README discloses that the desktop-only plugin reads a configured
-project outside the vault and launches its locally installed Slidev CLI.
+download. The generated bridge allowlists only the local vault root in Vite,
+denies `.obsidian`, unrelated presentation sources, and common configuration
+formats, and leaves the CLI bound to `localhost`. The README discloses the
+configured project access, temporary-file contents, vault allowlist, and
+external process, and tells users to run only trusted Slidev content.
 
 ## Testing
 
@@ -121,6 +137,11 @@ Unit and integration tests cover:
 - malformed or escaping `bin` entries are rejected;
 - missing project, CLI, entry file, Node, and invalid port have distinct errors;
 - project and note paths containing spaces/metacharacters remain single args;
+- an external vault note is imported through a project-local entry so the real
+  Slidev CLI resolves the configured project's theme, components, snippets,
+  and the vault's note-relative assets;
+- the bridge serves vault media while rejecting direct requests for unrelated
+  Markdown, configuration data, and `.obsidian` metadata;
 - the launcher uses `shell: false` and can execute a fake local CLI end to end;
 - an already-running server does not trigger a second launch;
 - settings migration preserves supported values and removes the old script.

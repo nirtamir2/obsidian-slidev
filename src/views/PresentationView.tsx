@@ -1,63 +1,54 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import { Notice } from "obsidian";
+import path from "node:path";
+import type { App, TFile, Vault } from "obsidian";
+import { requestUrl } from "obsidian";
 import {
   Show,
-  Suspense,
   createEffect,
-  createResource,
+  createSignal,
+  on,
   onCleanup,
   onMount,
+  untrack,
   useContext,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import "../styles.css";
+import type { PreparedSlidevLaunch } from "../launcher/slidevEntry";
+import { prepareSlidevLaunch } from "../launcher/slidevEntry";
+import type { SlidevLaunchSpec } from "../launcher/slidevLauncher";
+import { diagnoseSlidevLaunch, spawnSlidev } from "../launcher/slidevLauncher";
+import { terminateSlidevProcess } from "../launcher/slidevProcess";
+import { getSlidevServerUrl, probeSlidevServer } from "../server/slidevServer";
+import { getVaultPath } from "../utils/getVaultPath";
 import { CommandLog } from "./CommandLog";
 import { CommandLogModal } from "./CommandLogModal";
 import { SlidevStoreContext } from "./SlidevStoreContext";
-import { createStartServerCommand } from "./createStartServerCommand";
-import { ClipboardIcon } from "./icons/ClipboardIcon";
 import { GanttChartSquareIcon } from "./icons/GanttChartSquareIcon";
 import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
 import { RibbonButton } from "./icons/RibbonButton";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
-const localhost = () => "localhost"; //`127.0.0.1`;
+const serverProbeIntervalMs = 500;
+const serverProbeAttempts = 60;
 
-async function fetchIsServerUp(serverBaseUrl: string): Promise<boolean> {
-  try {
-    const response = await fetch(`${serverBaseUrl}index.html`, {
-      mode: "no-cors",
-    });
-    try {
-      await response.text();
-      return true;
-    } catch {
-      return false;
-    }
-  } catch {
-    return false;
-  }
-}
+type ServerState = "checking" | "running" | "starting" | "stopped";
 
-let command: ChildProcessWithoutNullStreams | null = null;
+type LaunchPreparation =
+  | { ok: true; prepared: PreparedSlidevLaunch }
+  | { ok: false; message: string };
 
 export interface LogMessage {
   type: "error" | "message";
   value: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createMessage(data: any) {
-  return {
-    type: "message" as const,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-    value: String(data.toString()),
-  };
+function createMessage(value: unknown): LogMessage {
+  return { type: "message", value: String(value) };
 }
 
-function createError(value: string) {
-  return { type: "error" as const, value };
+function createError(value: string): LogMessage {
+  return { type: "error", value };
 }
 
 function SlidevDebugHeader(props: {
@@ -66,7 +57,7 @@ function SlidevDebugHeader(props: {
   onOpenLog: () => void;
 }) {
   return (
-    <div class="sticky top-0 left-0 flex w-full items-center gap-3">
+    <div class="slidev-debug-toolbar">
       <button
         type="button"
         onClick={() => {
@@ -89,78 +80,120 @@ function SlidevDebugHeader(props: {
           props.onOpenLog();
         }}
       >
-        Log
+        View log
       </button>
     </div>
   );
+}
+
+function openExternal(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function resolveLocalVaultEntry(vault: Vault, vaultRelativePath: string) {
+  try {
+    const sourceRoot = getVaultPath(vault);
+    return {
+      entryPath: path.join(sourceRoot, vaultRelativePath),
+      sourceRoot,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getActiveMarkdownFile(app: App): TFile | null {
+  const activeFile = app.workspace.getActiveFile();
+  return activeFile?.extension === "md" ? activeFile : null;
+}
+
+async function tryPrepareSlidevLaunch(
+  spec: SlidevLaunchSpec,
+  sourceRoot: string,
+): Promise<LaunchPreparation> {
+  try {
+    return {
+      ok: true,
+      prepared: await prepareSlidevLaunch(spec, { sourceRoot }),
+    };
+  } catch (error) {
+    const detail = error instanceof Error ? `: ${error.message}` : ".";
+    return {
+      ok: false,
+      message: `Could not create a temporary Slidev entry in the configured project${detail}`,
+    };
+  }
 }
 
 function SlidevFallback(props: {
   commandLogMessages: Array<LogMessage>;
   slidevUrl: string;
   activeFilePath: string | null;
-  slidevStartCommand: string;
+  diagnostic: string | null;
+  isStarting: boolean;
   onStartServer: () => void;
   onRefetch: () => void;
   onShowLog: () => void;
 }) {
   return (
-    <div class="flex h-full items-center justify-center">
-      <div class="flex flex-col items-center gap-4">
-        <Show
-          when={props.activeFilePath != null}
-          fallback={
-            <>
-              <div class="text-xl text-red-400">No active file</div>
-              <div>
-                Please open a file first, then reopen the presentation view.
-              </div>
-            </>
-          }
-        >
-          <div class="text-xl text-red-400">Slidev server is not running</div>
-          <div>
-            No server found at <a href={props.slidevUrl}>{props.slidevUrl}</a>
+    <div class="slidev-view-state">
+      <Show
+        when={props.activeFilePath != null}
+        fallback={
+          <div class="slidev-stack slidev-stack--centered">
+            <div class="slidev-status-title">No active Markdown file</div>
+            <p>Open a Markdown file, then try again.</p>
           </div>
-          <div class="text-balance">
-            To start it manually, run this command in your Slidev project
-            folder:
+        }
+      >
+        <div class="slidev-stack slidev-stack--centered">
+          <div class="slidev-status-title">
+            {props.isStarting
+              ? "Starting the Slidev server…"
+              : "Slidev server is not running"}
           </div>
-          <div class="flex items-center gap-2">
-            <code class="text-balance">{props.slidevStartCommand}</code>
-            <RibbonButton
-              label="Copy slidev start command to clipboard"
-              onClick={() => {
-                void navigator.clipboard.writeText(props.slidevStartCommand);
-                void new Notice(
-                  `"${props.slidevStartCommand}" command copied to clipboard`,
-                );
-              }}
-            >
-              <ClipboardIcon />
-            </RibbonButton>
-          </div>
-          <div class="flex items-center gap-4">
+          <p>
+            No server is reachable at{" "}
+            <a href={props.slidevUrl}>{props.slidevUrl}</a>
+          </p>
+          <Show when={props.diagnostic != null}>
+            <p class="slidev-diagnostic">{props.diagnostic}</p>
+          </Show>
+          <div class="slidev-actions">
             <button
               type="button"
               onClick={() => {
                 props.onRefetch();
               }}
             >
-              Refresh
+              Check again
             </button>
             <button
               type="button"
+              class="mod-cta"
+              disabled={props.isStarting}
               onClick={() => {
                 props.onStartServer();
               }}
             >
-              Start slidev server
+              Start Slidev server
             </button>
+            <Show when={props.commandLogMessages.length > 0}>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onShowLog();
+                }}
+              >
+                View log
+              </button>
+            </Show>
           </div>
-          <CommandLog messages={props.commandLogMessages} />
-        </Show>
-      </div>
+          <Show when={props.commandLogMessages.length > 0}>
+            <CommandLog messages={props.commandLogMessages} />
+          </Show>
+        </div>
+      </Show>
     </div>
   );
 }
@@ -170,13 +203,12 @@ function SlidevPresentation(props: {
   onOpenSlideUrl: () => void;
   onOpenSlidevPresenterUrl: () => void;
   src: string;
-  slidevStartCommand: string;
 }) {
   return (
-    <div class="flex h-full flex-col">
-      <h4 class="flex items-center gap-2">
-        <div class="flex-1">{props.title}</div>
-        <div class="flex items-center gap-2">
+    <div class="slidev-presentation">
+      <div class="slidev-presentation-header">
+        <h4>{props.title}</h4>
+        <div class="slidev-presentation-actions">
           <RibbonButton
             label="Open presentation view"
             onClick={props.onOpenSlideUrl}
@@ -189,36 +221,18 @@ function SlidevPresentation(props: {
           >
             <GanttChartSquareIcon />
           </RibbonButton>
-          <RibbonButton
-            label="Copy slidev start command to clipboard"
-            onClick={() => {
-              void navigator.clipboard.writeText(props.slidevStartCommand);
-              void new Notice(
-                `"${props.slidevStartCommand}" command copied to clipboard`,
-              );
-            }}
-          >
-            <ClipboardIcon />
-          </RibbonButton>
         </div>
-      </h4>
+      </div>
 
       <iframe
         // eslint-disable-next-line @eslint-react/dom/no-unsafe-iframe-sandbox
         sandbox="allow-scripts allow-same-origin"
         src={props.src}
         title="Slidev presentation"
-        class="size-full"
-        id="iframe"
+        class="slidev-presentation-frame"
       />
     </div>
   );
-}
-
-function killCommand() {
-  if (command != null) {
-    command.kill("SIGINT");
-  }
 }
 
 export const PresentationView = () => {
@@ -229,182 +243,424 @@ export const PresentationView = () => {
   const [commandLogMessages, setCommandLogMessages] = createStore<
     Array<LogMessage>
   >([]);
-
-  const serverBaseUrl = () =>
-    `http://${localhost()}:${config.port.toFixed(0)}/`;
-
-  const [isServerUp, { refetch }] = createResource(
-    serverBaseUrl,
-    fetchIsServerUp,
+  const [activeFilePath, setActiveFilePath] = createSignal<string | null>(
+    app.workspace.getActiveFile()?.path ?? null,
   );
+  const [diagnostic, setDiagnostic] = createSignal<string | null>(null);
+  const [serverState, setServerState] = createSignal<ServerState>("checking");
 
-  createEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    store.currentSlideNumber;
-    void refetch();
-  });
+  let childProcess: ChildProcessWithoutNullStreams | null = null;
+  let launchArtifactCleanup: (() => Promise<void>) | null = null;
+  let stoppingProcess: Promise<void> | null = null;
+  let disposed = false;
+  let generation = 0;
+  let logIndex = 0;
+  let probeTimer: ReturnType<typeof setTimeout> | null = null;
 
   const commandLogModal = new CommandLogModal(app, commandLogMessages);
+  const serverBaseUrl = () => getSlidevServerUrl(config.port);
 
-  const iframeSrcUrl = () => {
-    return `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}?embedded=true`;
-  };
-
-  function addLogListeners(command: ChildProcessWithoutNullStreams) {
-    command.on("disconnect", () => {
-      setCommandLogMessages([...commandLogMessages, createError("disconnect")]);
-    });
-
-    command.on("error", (error) => {
-      setCommandLogMessages([
-        ...commandLogMessages,
-        createError(error.message),
-      ]);
-    });
-
-    command.on("close", (code) => {
-      setCommandLogMessages([
-        ...commandLogMessages,
-        createError(`child process exited with code ${String(code)}`),
-      ]);
-    });
-
-    command.on("message", (message) => {
-      setCommandLogMessages([...commandLogMessages, createMessage(message)]);
-    });
-
-    command.on("exit", (code, signal) => {
-      const errorMessage = `child process exited with code ${String(
-        code,
-      )} and signal ${String(signal)}`;
-
-      setCommandLogMessages([...commandLogMessages, createError(errorMessage)]);
-    });
-
-    command.stdout.on("data", (data) => {
-      setCommandLogMessages([...commandLogMessages, createMessage(data)]);
-    });
-
-    command.stderr.on("data", (data) => {
-      setCommandLogMessages([...commandLogMessages, createMessage(data)]);
-    });
+  function appendLog(message: LogMessage) {
+    setCommandLogMessages(logIndex, message);
+    logIndex += 1;
   }
 
-  function startSlidevServer() {
-    if (command != null) {
-      command.kill("SIGINT");
+  function clearProbeTimer() {
+    if (probeTimer != null) {
+      clearTimeout(probeTimer);
+      probeTimer = null;
+    }
+  }
+
+  function takeLaunchArtifactCleanup() {
+    const cleanupLaunchArtifact = launchArtifactCleanup;
+    launchArtifactCleanup = null;
+    return cleanupLaunchArtifact;
+  }
+
+  async function runLaunchArtifactCleanup(
+    cleanupLaunchArtifact: (() => Promise<void>) | null,
+  ) {
+    if (cleanupLaunchArtifact == null) {
+      return;
+    }
+    try {
+      await cleanupLaunchArtifact();
+    } catch (error) {
+      if (!disposed) {
+        appendLog(
+          createError(
+            error instanceof Error
+              ? error.message
+              : "Could not remove the temporary Slidev files.",
+          ),
+        );
+      }
+    }
+  }
+
+  async function stopOwnedProcess() {
+    clearProbeTimer();
+    const processToStop = childProcess;
+    const cleanupLaunchArtifact = takeLaunchArtifactCleanup();
+    childProcess = null;
+    if (processToStop != null) {
+      const waitingForExit = terminateSlidevProcess(processToStop);
+      stoppingProcess = waitingForExit;
+      await waitingForExit;
+      if (stoppingProcess === waitingForExit) {
+        stoppingProcess = null;
+      }
+    } else if (stoppingProcess != null) {
+      await stoppingProcess;
     }
 
-    command = createStartServerCommand({ app, config });
+    await runLaunchArtifactCleanup(cleanupLaunchArtifact);
+  }
 
-    addLogListeners(command);
+  async function isServerRunning() {
+    return await probeSlidevServer(
+      config.port,
+      async (options) => await requestUrl(options),
+    );
+  }
 
-    // Arbitrary wait to the server to start
-    setTimeout(() => {
-      void refetch();
-    }, 3000);
+  function isCurrentGeneration(currentGeneration: number) {
+    return !disposed && currentGeneration === generation;
+  }
 
-    process.on("exit", () => {
-      killCommand();
+  async function canContinueAfterRestart(
+    restartOwnedProcess: boolean,
+    currentGeneration: number,
+  ) {
+    if (!restartOwnedProcess) {
+      return true;
+    }
+    await stopOwnedProcess();
+    return isCurrentGeneration(currentGeneration);
+  }
+
+  function setServerStateIfCurrent(
+    currentGeneration: number,
+    state: ServerState,
+  ) {
+    if (isCurrentGeneration(currentGeneration)) {
+      setServerState(state);
+    }
+  }
+
+  async function pollForServer(currentGeneration: number, attempt: number) {
+    if (!isCurrentGeneration(currentGeneration)) {
+      return;
+    }
+
+    if (await isServerRunning()) {
+      if (isCurrentGeneration(currentGeneration)) {
+        setDiagnostic(null);
+        setServerState("running");
+      }
+      return;
+    }
+
+    if (!isCurrentGeneration(currentGeneration)) {
+      return;
+    }
+
+    if (childProcess == null) {
+      setDiagnostic("Slidev exited before its server became reachable.");
+      setServerState("stopped");
+      return;
+    }
+
+    if (attempt >= serverProbeAttempts) {
+      setDiagnostic(
+        "Slidev started, but its server did not become reachable within 30 seconds. Check the process log for details.",
+      );
+      setServerState("stopped");
+      return;
+    }
+
+    probeTimer = setTimeout(() => {
+      void pollForServer(currentGeneration, attempt + 1);
+    }, serverProbeIntervalMs);
+  }
+
+  async function finishClosedProcess(
+    cleanupLaunchArtifact: (() => Promise<void>) | null,
+    currentGeneration: number,
+  ) {
+    await runLaunchArtifactCleanup(cleanupLaunchArtifact);
+    await pollForServer(currentGeneration, serverProbeAttempts);
+  }
+
+  function addProcessListeners(
+    processToObserve: ChildProcessWithoutNullStreams,
+    currentGeneration: number,
+  ) {
+    processToObserve.on("error", (error) => {
+      untrack(() => {
+        appendLog(createError(error.message));
+        if (childProcess === processToObserve) {
+          childProcess = null;
+          clearProbeTimer();
+          void runLaunchArtifactCleanup(takeLaunchArtifactCleanup());
+          setDiagnostic(error.message);
+          setServerState("stopped");
+        }
+      });
+    });
+
+    processToObserve.on("close", (code, signal) => {
+      untrack(() => {
+        const detail = `Slidev exited with code ${String(code)} and signal ${String(signal)}.`;
+        const exitedUnexpectedly =
+          code !== 0 && childProcess === processToObserve;
+        appendLog(
+          exitedUnexpectedly ? createError(detail) : createMessage(detail),
+        );
+
+        if (childProcess === processToObserve) {
+          childProcess = null;
+          clearProbeTimer();
+          void finishClosedProcess(
+            takeLaunchArtifactCleanup(),
+            currentGeneration,
+          );
+        }
+      });
+    });
+
+    processToObserve.stdout.on("data", (data: unknown) => {
+      untrack(() => {
+        appendLog(createMessage(data));
+      });
+    });
+    processToObserve.stderr.on("data", (data: unknown) => {
+      untrack(() => {
+        appendLog(createError(String(data)));
+      });
     });
   }
 
-  onMount(() => {
-    startSlidevServer();
-  });
+  async function ensureServer(restartOwnedProcess = false) {
+    const currentGeneration = ++generation;
+    clearProbeTimer();
+    if (
+      !(await canContinueAfterRestart(restartOwnedProcess, currentGeneration))
+    ) {
+      return;
+    }
 
-  onCleanup(() => {
-    killCommand();
-  });
+    const activeMarkdownFile = getActiveMarkdownFile(app);
+    setActiveFilePath(activeMarkdownFile?.path ?? null);
+    setDiagnostic(null);
+    setServerState("checking");
 
-  function handleOpenLog() {
-    commandLogModal.open();
+    if (await isServerRunning()) {
+      setServerStateIfCurrent(currentGeneration, "running");
+      return;
+    }
+
+    if (!isCurrentGeneration(currentGeneration)) {
+      return;
+    }
+
+    if (activeMarkdownFile == null) {
+      setDiagnostic("Open a Markdown file before starting Slidev.");
+      setServerState("stopped");
+      return;
+    }
+
+    const localEntry = resolveLocalVaultEntry(
+      app.vault,
+      activeMarkdownFile.path,
+    );
+    if (localEntry == null) {
+      setDiagnostic("Slidev requires a vault stored on the local file system.");
+      setServerState("stopped");
+      return;
+    }
+
+    const diagnosis = await diagnoseSlidevLaunch({
+      projectPath: config.slidevTemplateLocation,
+      entryPath: localEntry.entryPath,
+      nodeExecutable: config.nodeExecutable,
+      port: config.port,
+    });
+
+    if (!isCurrentGeneration(currentGeneration)) {
+      return;
+    }
+
+    if (!diagnosis.ok) {
+      setDiagnostic(diagnosis.message);
+      setServerState("stopped");
+      return;
+    }
+
+    const launchPreparation = await tryPrepareSlidevLaunch(
+      diagnosis.spec,
+      localEntry.sourceRoot,
+    );
+    if (!launchPreparation.ok) {
+      appendLog(createError(launchPreparation.message));
+      setDiagnostic(launchPreparation.message);
+      setServerState("stopped");
+      return;
+    }
+    const { prepared: preparedLaunch } = launchPreparation;
+
+    if (!isCurrentGeneration(currentGeneration)) {
+      await preparedLaunch.cleanup();
+      return;
+    }
+
+    launchArtifactCleanup = async () => {
+      await preparedLaunch.cleanup();
+    };
+    appendLog(
+      createMessage(
+        `Starting the project-local Slidev CLI with ${preparedLaunch.spec.nodeVersion}.`,
+      ),
+    );
+
+    try {
+      const startedProcess = spawnSlidev(preparedLaunch.spec);
+      childProcess = startedProcess;
+      addProcessListeners(startedProcess, currentGeneration);
+      setServerState("starting");
+      void pollForServer(currentGeneration, 0);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The Slidev process could not be started.";
+      appendLog(createError(message));
+      setDiagnostic(message);
+      setServerState("stopped");
+      await runLaunchArtifactCleanup(takeLaunchArtifactCleanup());
+    }
+  }
+
+  async function refreshServerStatus() {
+    const currentGeneration = generation;
+    const isRunning = await isServerRunning();
+    if (!isCurrentGeneration(currentGeneration)) {
+      return;
+    }
+    if (isRunning) {
+      setServerState("running");
+      return;
+    }
+    if (childProcess == null) {
+      setServerState("stopped");
+    }
   }
 
   function handleStopServer() {
-    if (command != null) {
-      command.kill();
-      void refetch();
-    }
+    generation += 1;
+    void stopOwnedProcess();
+    setDiagnostic("The Slidev process started by this view was stopped.");
+    setServerState("stopped");
   }
 
-  function handleOpenSlideUrl() {
-    window.open(
-      `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}`,
-      "noopener=true,noreferrer=true",
-    );
-  }
-
-  function handleOpenSlidePresenterUrl() {
-    window.open(
-      `${serverBaseUrl()}presenter/${store.currentSlideNumber.toFixed(0)}`,
-      "noopener=true,noreferrer=true",
-    );
-  }
-
-  const slidevStartCommand = () => {
-    const activeFile = app.workspace.getActiveFile();
-    if (activeFile == null) {
-      return `No active file`;
-    }
-    return `npm run dev ${activeFile.path} -- --port ${config.port.toFixed(0)}`;
-  };
+  const iframeSrcUrl = () =>
+    `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}?embedded=true`;
 
   const title = () => {
-    const activeFile = app.workspace.getActiveFile();
-    const currentSlideFileName = activeFile == null ? "" : activeFile.basename;
-
-    const slideNumber =
-      store.currentSlideNumber === 0
-        ? ""
-        : ` #${store.currentSlideNumber.toFixed(0)}`;
-
-    return `${currentSlideFileName}${slideNumber}`;
+    const currentActiveFilePath = activeFilePath();
+    const currentSlideFileName =
+      currentActiveFilePath == null
+        ? "Slidev presentation"
+        : (app.workspace.getActiveFile()?.basename ??
+          path.basename(
+            currentActiveFilePath,
+            path.extname(currentActiveFilePath),
+          ));
+    return `${currentSlideFileName} #${store.currentSlideNumber.toFixed(0)}`;
   };
 
-  function handleRefetch() {
-    void refetch();
-  }
+  createEffect(
+    on(
+      () => [config.port, config.nodeExecutable, config.slidevTemplateLocation],
+      () => {
+        void ensureServer(true);
+      },
+      { defer: true },
+    ),
+  );
+
+  onMount(() => {
+    const fileOpenEvent = app.workspace.on("file-open", () => {
+      untrack(() => {
+        void ensureServer(true);
+      });
+    });
+    void ensureServer();
+
+    onCleanup(() => {
+      app.workspace.offref(fileOpenEvent);
+    });
+  });
+
+  onCleanup(() => {
+    disposed = true;
+    generation += 1;
+    void stopOwnedProcess();
+    commandLogModal.close();
+  });
 
   return (
-    <Suspense
-      fallback={
-        <div class="flex h-full items-center justify-center">
-          Loading slidev slides
-        </div>
-      }
-    >
-      <div class="flex h-full flex-col">
-        <Show when={config.isDebug}>
-          <SlidevDebugHeader
-            onStartServer={startSlidevServer}
-            onStopServer={handleStopServer}
-            onOpenLog={handleOpenLog}
+    <div class="slidev-view">
+      <Show when={config.isDebug}>
+        <SlidevDebugHeader
+          onStartServer={() => {
+            void ensureServer(true);
+          }}
+          onStopServer={handleStopServer}
+          onOpenLog={() => {
+            commandLogModal.open();
+          }}
+        />
+      </Show>
+      <Show
+        when={serverState() === "running"}
+        fallback={
+          <SlidevFallback
+            activeFilePath={activeFilePath()}
+            commandLogMessages={commandLogMessages}
+            diagnostic={diagnostic()}
+            isStarting={
+              serverState() === "checking" || serverState() === "starting"
+            }
+            slidevUrl={serverBaseUrl()}
+            onStartServer={() => {
+              void ensureServer(true);
+            }}
+            onRefetch={() => {
+              void refreshServerStatus();
+            }}
+            onShowLog={() => {
+              commandLogModal.open();
+            }}
           />
-        </Show>
-        <Show
-          when={isServerUp()}
-          fallback={
-            <SlidevFallback
-              activeFilePath={app.workspace.getActiveFile()?.path ?? null}
-              commandLogMessages={commandLogMessages}
-              slidevStartCommand={slidevStartCommand()}
-              slidevUrl={serverBaseUrl()}
-              onStartServer={startSlidevServer}
-              onRefetch={handleRefetch}
-              onShowLog={handleOpenLog}
-            />
-          }
-        >
-          <SlidevPresentation
-            title={title()}
-            src={iframeSrcUrl()}
-            slidevStartCommand={slidevStartCommand()}
-            onOpenSlideUrl={handleOpenSlideUrl}
-            onOpenSlidevPresenterUrl={handleOpenSlidePresenterUrl}
-          />
-        </Show>
-      </div>
-    </Suspense>
+        }
+      >
+        <SlidevPresentation
+          title={title()}
+          src={iframeSrcUrl()}
+          onOpenSlideUrl={() => {
+            openExternal(
+              `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}`,
+            );
+          }}
+          onOpenSlidevPresenterUrl={() => {
+            openExternal(
+              `${serverBaseUrl()}presenter/${store.currentSlideNumber.toFixed(0)}`,
+            );
+          }}
+        />
+      </Show>
+    </div>
   );
 };

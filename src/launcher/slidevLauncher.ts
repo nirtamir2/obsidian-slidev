@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const nodeProbeTimeoutMs = 5000;
+type ProcessEnvironment = typeof process.env;
 
 export type SlidevLaunchErrorCode =
   | "invalid-port"
@@ -25,12 +26,26 @@ export interface SlidevLaunchInput {
   nodeExecutable?: string;
 }
 
+export interface SlidevProjectInput {
+  projectPath: string;
+  nodeExecutable?: string;
+}
+
+export interface SlidevProject {
+  projectPath: string;
+  cliPath: string;
+  nodeExecutable: string;
+  nodeVersion: string;
+}
+
 export interface SlidevLaunchSpec {
   executable: string;
   args: Array<string>;
   cwd: string;
   cliPath: string;
+  entryPath: string;
   nodeVersion: string;
+  port: number;
 }
 
 export type SlidevLaunchDiagnosis =
@@ -41,19 +56,27 @@ export type SlidevLaunchDiagnosis =
       message: string;
     };
 
+export type SlidevProjectDiagnosis =
+  | { ok: true; project: SlidevProject }
+  | {
+      ok: false;
+      code: Exclude<SlidevLaunchErrorCode, "invalid-port" | "missing-entry">;
+      message: string;
+    };
+
 interface SlidevPackageJson {
   name?: unknown;
   bin?: unknown;
 }
 
 interface SlidevLauncherDependencies {
-  env: NodeJS.ProcessEnv;
+  env: ProcessEnvironment;
   probeNode(executable: string): Promise<string>;
 }
 
 interface SlidevSpawnOptions {
   cwd: string;
-  env: NodeJS.ProcessEnv;
+  env: ProcessEnvironment;
   shell: false;
   stdio: "pipe";
   windowsHide: true;
@@ -88,8 +111,6 @@ export async function diagnoseSlidevLaunch(
   input: SlidevLaunchInput,
   dependencies: Partial<SlidevLauncherDependencies> = {},
 ): Promise<SlidevLaunchDiagnosis> {
-  const deps = { ...defaultDependencies, ...dependencies };
-
   if (!isPort(input.port)) {
     return failure(
       "invalid-port",
@@ -97,20 +118,9 @@ export async function diagnoseSlidevLaunch(
     );
   }
 
-  const configuredProjectPath = input.projectPath.trim();
-  if (configuredProjectPath.length === 0) {
-    return failure(
-      "missing-project",
-      "Choose an existing Slidev project folder.",
-    );
-  }
-
-  const projectPath = path.resolve(configuredProjectPath);
-  if (!(await isDirectory(projectPath))) {
-    return failure(
-      "missing-project",
-      "Choose an existing Slidev project folder.",
-    );
+  const projectDiagnosis = await diagnoseSlidevProject(input, dependencies);
+  if (!projectDiagnosis.ok) {
+    return projectDiagnosis;
   }
 
   const entryPath = path.resolve(input.entryPath);
@@ -121,29 +131,69 @@ export async function diagnoseSlidevLaunch(
     );
   }
 
+  const { project } = projectDiagnosis;
+
+  return {
+    ok: true,
+    spec: {
+      executable: project.nodeExecutable,
+      args: [project.cliPath, entryPath, "--port", String(input.port)],
+      cwd: project.projectPath,
+      cliPath: project.cliPath,
+      entryPath,
+      nodeVersion: project.nodeVersion,
+      port: input.port,
+    },
+  };
+}
+
+export async function diagnoseSlidevProject(
+  input: SlidevProjectInput,
+  dependencies: Partial<SlidevLauncherDependencies> = {},
+): Promise<SlidevProjectDiagnosis> {
+  const deps = { ...defaultDependencies, ...dependencies };
+
+  const configuredProjectPath = stripSurroundingQuotes(
+    input.projectPath.trim(),
+  );
+  if (configuredProjectPath.length === 0) {
+    return projectFailure(
+      "missing-project",
+      "Choose an existing Slidev project folder.",
+    );
+  }
+
+  const projectPath = path.resolve(configuredProjectPath);
+  if (!(await isDirectory(projectPath))) {
+    return projectFailure(
+      "missing-project",
+      "Choose an existing Slidev project folder.",
+    );
+  }
+
   const packagePath = path.join(projectPath, "node_modules", "@slidev", "cli");
   const packageJsonPath = path.join(packagePath, "package.json");
 
-  let packageJson: SlidevPackageJson;
+  let packageJson: SlidevPackageJson = {};
   try {
     packageJson = JSON.parse(
       await readFile(packageJsonPath, "utf8"),
     ) as SlidevPackageJson;
   } catch (error) {
     if (isMissingFileError(error)) {
-      return failure(
+      return projectFailure(
         "missing-slidev-package",
         "Install @slidev/cli in the configured Slidev project.",
       );
     }
-    return failure(
+    return projectFailure(
       "invalid-slidev-package",
       "The local @slidev/cli package metadata is invalid.",
     );
   }
 
   if (packageJson.name !== "@slidev/cli") {
-    return failure(
+    return projectFailure(
       "invalid-slidev-package",
       "The local Slidev package metadata has an unexpected name.",
     );
@@ -151,7 +201,7 @@ export async function diagnoseSlidevLaunch(
 
   const binPath = getSlidevBinPath(packageJson.bin);
   if (binPath == null) {
-    return failure(
+    return projectFailure(
       "invalid-slidev-package",
       "The local @slidev/cli package does not declare its slidev executable.",
     );
@@ -159,7 +209,7 @@ export async function diagnoseSlidevLaunch(
 
   const cliPath = path.resolve(packagePath, binPath);
   if (!isPathInside(packagePath, cliPath) || !(await isFile(cliPath))) {
-    return failure(
+    return projectFailure(
       "invalid-slidev-bin",
       "The local Slidev executable is missing or invalid.",
     );
@@ -169,13 +219,13 @@ export async function diagnoseSlidevLaunch(
     const realPackagePath = await realpath(packagePath);
     const realCliPath = await realpath(cliPath);
     if (!isPathInside(realPackagePath, realCliPath)) {
-      return failure(
+      return projectFailure(
         "invalid-slidev-bin",
         "The local Slidev executable resolves outside its package.",
       );
     }
   } catch {
-    return failure(
+    return projectFailure(
       "invalid-slidev-bin",
       "The local Slidev executable cannot be resolved.",
     );
@@ -186,17 +236,17 @@ export async function diagnoseSlidevLaunch(
     deps.env,
   );
   if (nodeExecutable == null) {
-    return failure(
+    return projectFailure(
       "missing-node",
       "Node.js was not found. Configure its executable path in Slidev settings.",
     );
   }
 
-  let nodeVersion: string;
+  let nodeVersion = "";
   try {
     nodeVersion = await deps.probeNode(nodeExecutable);
   } catch {
-    return failure(
+    return projectFailure(
       "invalid-node",
       "The configured Node.js executable could not be started.",
     );
@@ -204,11 +254,10 @@ export async function diagnoseSlidevLaunch(
 
   return {
     ok: true,
-    spec: {
-      executable: nodeExecutable,
-      args: [cliPath, entryPath, "--port", String(input.port)],
-      cwd: projectPath,
+    project: {
+      projectPath,
       cliPath,
+      nodeExecutable,
       nodeVersion,
     },
   };
@@ -231,6 +280,13 @@ function failure(
   code: SlidevLaunchErrorCode,
   message: string,
 ): SlidevLaunchDiagnosis {
+  return { ok: false, code, message };
+}
+
+function projectFailure(
+  code: Exclude<SlidevLaunchErrorCode, "invalid-port" | "missing-entry">,
+  message: string,
+): SlidevProjectDiagnosis {
   return { ok: false, code, message };
 }
 
@@ -263,7 +319,8 @@ function isPort(port: number): boolean {
 
 async function isDirectory(filePath: string): Promise<boolean> {
   try {
-    return (await stat(filePath)).isDirectory();
+    const fileStats = await stat(filePath);
+    return fileStats.isDirectory();
   } catch {
     return false;
   }
@@ -271,7 +328,8 @@ async function isDirectory(filePath: string): Promise<boolean> {
 
 async function isFile(filePath: string): Promise<boolean> {
   try {
-    return (await stat(filePath)).isFile();
+    const fileStats = await stat(filePath);
+    return fileStats.isFile();
   } catch {
     return false;
   }
@@ -279,23 +337,23 @@ async function isFile(filePath: string): Promise<boolean> {
 
 async function resolveNodeExecutable(
   configuredExecutable: string | undefined,
-  env: NodeJS.ProcessEnv,
+  env: ProcessEnvironment,
 ): Promise<string | null> {
-  const configured = configuredExecutable?.trim();
-  if (configured != null && configured.length > 0) {
+  const configured = stripSurroundingQuotes(configuredExecutable?.trim() ?? "");
+  if (configured.length > 0) {
     const expandedPath = expandHome(configured);
     if (path.isAbsolute(expandedPath) || hasPathSeparator(expandedPath)) {
       const absolutePath = path.resolve(expandedPath);
       return (await isFile(absolutePath)) ? absolutePath : null;
     }
-    return findOnPath(expandedPath, env);
+    return await findOnPath(expandedPath, env);
   }
-  return findOnPath("node", env);
+  return await findOnPath("node", env);
 }
 
 async function findOnPath(
   executableName: string,
-  env: NodeJS.ProcessEnv,
+  env: ProcessEnvironment,
 ): Promise<string | null> {
   const pathValue = env["PATH"] ?? env["Path"] ?? env["path"];
   if (pathValue == null || pathValue.length === 0) {
@@ -308,8 +366,12 @@ async function findOnPath(
     if (directory.length === 0) {
       continue;
     }
+    const absoluteDirectory = path.resolve(directory);
     for (const extension of extensions) {
-      const candidate = path.join(directory, `${executableName}${extension}`);
+      const candidate = path.join(
+        absoluteDirectory,
+        `${executableName}${extension}`,
+      );
       if (await isFile(candidate)) {
         return candidate;
       }

@@ -31,4 +31,13 @@ declare module "obsidian" {
     };
     on(name: "raw", callback: (file: string) => void, ctx?: any): EventRef;
   }
+
+  export interface Workspace {
+    on(
+      name: "slidev:settings-changed",
+      callback: () => void,
+      ctx?: unknown,
+    ): EventRef;
+    trigger(name: "slidev:settings-changed"): void;
+  }
 }

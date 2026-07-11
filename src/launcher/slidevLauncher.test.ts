@@ -11,17 +11,105 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { SlidevLaunchInput, SlidevLaunchSpec } from "./slidevLauncher";
 import {
-  type SlidevLaunchInput,
-  type SlidevLaunchSpec,
   diagnoseSlidevLaunch,
+  diagnoseSlidevProject,
   spawnSlidev,
 } from "./slidevLauncher";
 
 const validPort = 3030;
 
+interface FixtureOptions {
+  projectName?: string;
+  entryName?: string;
+  cliSource?: string;
+}
+
+describe("diagnoseSlidevProject", () => {
+  let testRoot = "";
+
+  beforeEach(async () => {
+    testRoot = await mkdtemp(path.join(tmpdir(), "obsidian-slidev-project-"));
+  });
+
+  afterEach(async () => {
+    if (testRoot.length > 0) {
+      await rm(testRoot, { force: true, recursive: true });
+    }
+  });
+
+  it("verifies a local Slidev project without requiring an active note", async () => {
+    const fixture = await createValidFixture(testRoot);
+
+    const diagnosis = await diagnoseSlidevProject({
+      projectPath: fixture.projectPath,
+      nodeExecutable: process.execPath,
+    });
+
+    expect(diagnosis).toEqual({
+      ok: true,
+      project: {
+        projectPath: fixture.projectPath,
+        cliPath: fixture.cliPath,
+        nodeExecutable: process.execPath,
+        nodeVersion: process.version,
+      },
+    });
+  });
+
+  it("accepts a quoted absolute Node.js path copied from a terminal", async () => {
+    const fixture = await createValidFixture(testRoot);
+
+    const diagnosis = await diagnoseSlidevProject({
+      projectPath: fixture.projectPath,
+      nodeExecutable: `"${process.execPath}"`,
+    });
+
+    expect(diagnosis).toMatchObject({
+      ok: true,
+      project: { nodeExecutable: process.execPath },
+    });
+  });
+
+  it("accepts a quoted project path copied on Windows", async () => {
+    const fixture = await createValidFixture(testRoot);
+
+    const diagnosis = await diagnoseSlidevProject({
+      projectPath: `"${fixture.projectPath}"`,
+      nodeExecutable: process.execPath,
+    });
+
+    expect(diagnosis).toMatchObject({
+      ok: true,
+      project: { projectPath: fixture.projectPath },
+    });
+  });
+
+  it("resolves relative PATH entries before changing to the project directory", async () => {
+    const fixture = await createValidFixture(testRoot);
+    const nodeDirectory = path.join(testRoot, "relative-node-bin");
+    const nodePath = path.join(nodeDirectory, "node");
+    await mkdir(nodeDirectory);
+    await writeFile(nodePath, "fake node executable");
+
+    const diagnosis = await diagnoseSlidevProject(
+      { projectPath: fixture.projectPath },
+      {
+        env: { PATH: path.relative(process.cwd(), nodeDirectory) },
+        probeNode: async () => "v24.0.0",
+      },
+    );
+
+    expect(diagnosis).toMatchObject({
+      ok: true,
+      project: { nodeExecutable: nodePath },
+    });
+  });
+});
+
 describe("diagnoseSlidevLaunch", () => {
-  let testRoot: string;
+  let testRoot = "";
 
   beforeEach(async () => {
     testRoot = await mkdtemp(path.join(tmpdir(), "obsidian-slidev-launcher-"));
@@ -29,7 +117,9 @@ describe("diagnoseSlidevLaunch", () => {
 
   afterEach(async () => {
     vi.unstubAllEnvs();
-    await rm(testRoot, { force: true, recursive: true });
+    if (testRoot.length > 0) {
+      await rm(testRoot, { force: true, recursive: true });
+    }
   });
 
   it("requires a project-local Slidev package even when slidev is on PATH", async () => {
@@ -78,7 +168,9 @@ describe("diagnoseSlidevLaunch", () => {
         args: [fixture.cliPath, fixture.entryPath, "--port", String(validPort)],
         cwd: fixture.projectPath,
         cliPath: fixture.cliPath,
+        entryPath: fixture.entryPath,
         nodeVersion: process.version,
+        port: validPort,
       },
     });
   });
@@ -208,11 +300,10 @@ describe("diagnoseSlidevLaunch", () => {
   });
 
   it("keeps spaces and shell metacharacters in paths as individual arguments", async () => {
-    const fixture = await createValidFixture(
-      testRoot,
-      "Slidev project & (conference) $draft",
-      "deck; keynote & notes $(draft).md",
-    );
+    const fixture = await createValidFixture(testRoot, {
+      projectName: "Slidev project & (conference) $draft",
+      entryName: "deck; keynote & notes $(draft).md",
+    });
 
     const diagnosis = await diagnoseSlidevLaunch(fixture.input);
 
@@ -228,14 +319,16 @@ describe("diagnoseSlidevLaunch", () => {
 });
 
 describe("spawnSlidev", () => {
-  let testRoot: string;
+  let testRoot = "";
 
   beforeEach(async () => {
     testRoot = await mkdtemp(path.join(tmpdir(), "obsidian-slidev-spawn-"));
   });
 
   afterEach(async () => {
-    await rm(testRoot, { force: true, recursive: true });
+    if (testRoot.length > 0) {
+      await rm(testRoot, { force: true, recursive: true });
+    }
   });
 
   it("spawns the diagnosed executable and arguments with shell disabled", () => {
@@ -249,7 +342,9 @@ describe("spawnSlidev", () => {
       ],
       cwd: "/project & safe",
       cliPath: "/project & safe/node_modules/@slidev/cli/bin/slidev.mjs",
+      entryPath: "/vault/deck; safe.md",
       nodeVersion: "v24.0.0",
+      port: validPort,
     };
     const child = {} as ChildProcessWithoutNullStreams;
     const spawnImpl = vi.fn(() => child);
@@ -267,15 +362,14 @@ describe("spawnSlidev", () => {
 
   it("runs a fake local CLI end-to-end without reparsing metacharacters", async () => {
     const invocationPath = path.join(testRoot, "invocation.json");
-    const fixture = await createValidFixture(
-      testRoot,
-      "Slidev project & (conference) $draft",
-      "deck; keynote & notes $(draft).md",
-      [
+    const fixture = await createValidFixture(testRoot, {
+      projectName: "Slidev project & (conference) $draft",
+      entryName: "deck; keynote & notes $(draft).md",
+      cliSource: [
         'import { writeFileSync } from "node:fs";',
         `writeFileSync(${JSON.stringify(invocationPath)}, JSON.stringify(process.argv.slice(2)));`,
       ].join("\n"),
-    );
+    });
     const diagnosis = await diagnoseSlidevLaunch(fixture.input);
     expect(diagnosis.ok).toBe(true);
     if (!diagnosis.ok) {
@@ -287,7 +381,7 @@ describe("spawnSlidev", () => {
     child.stderr.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
     const [exitCode, signal] = (await once(child, "close")) as [
       number | null,
-      NodeJS.Signals | null,
+      string | null,
     ];
 
     expect({
@@ -305,10 +399,11 @@ describe("spawnSlidev", () => {
 
 async function createValidFixture(
   testRoot: string,
-  projectName = "project",
-  entryName = "slides.md",
-  cliSource = "// fake Slidev CLI\n",
+  options: FixtureOptions = {},
 ) {
+  const projectName = options.projectName ?? "project";
+  const entryName = options.entryName ?? "slides.md";
+  const cliSource = options.cliSource ?? "// fake Slidev CLI\n";
   const projectPath = path.join(testRoot, projectName);
   const entryPath = path.join(testRoot, entryName);
   const packagePath = path.join(projectPath, "node_modules", "@slidev", "cli");
@@ -329,8 +424,8 @@ async function createValidFixture(
   const input: SlidevLaunchInput = {
     projectPath,
     entryPath,
-    nodeExecutable: process.execPath,
     port: validPort,
+    nodeExecutable: process.execPath,
   };
 
   return {

@@ -1,117 +1,109 @@
 name: Release Obsidian plugin
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "version"
-        required: true
+  push:
+    tags:
+      - "*"
 
-env:
-  PLUGIN_NAME: slidev
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  bump:
+  release:
+    name: Build draft release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
-          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Create local changes
-        run: |
-          npm run version ${{ github.event.inputs.version }}
-      - name: Commit files
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git commit -a -m "🔖 Bump version number to ${{ github.event.inputs.version }}"
-          git tag -a ${{ github.event.inputs.version }} -m ""
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
-          tags: true
+      - name: Check out tagged source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-  build:
-    runs-on: ubuntu-latest
-    needs: ["bump"]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.version }}
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v4
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const readJson = async (file) =>
+            JSON.parse(await readFile(file, "utf8"));
+          const [packageJson, manifest, versions] = await Promise.all([
+            readJson("package.json"),
+            readJson("manifest.json"),
+            readJson("versions.json"),
+          ]);
+          const tag = process.env.RELEASE_TAG;
+
+          if (!/^\d+\.\d+\.\d+$/.test(tag ?? "")) {
+            throw new Error(`Release tag must use x.y.z format; received ${tag}`);
+          }
+          if (packageJson.version !== tag || manifest.version !== tag) {
+            throw new Error(
+              `Tag ${tag} must match package.json (${packageJson.version}) and manifest.json (${manifest.version})`,
+            );
+          }
+          if (versions[tag] !== manifest.minAppVersion) {
+            throw new Error(
+              `versions.json must map ${tag} to ${manifest.minAppVersion}`,
+            );
+          }
+          NODE
+
+      - name: Lint
+        run: pnpm exec eslint "**/*.{ts,tsx,js,jsx,json}"
+
+      - name: Check formatting
+        run: pnpm exec prettier "**/*" --check --ignore-unknown
+
+      - name: Type-check
+        run: pnpm run type-check
+
+      - name: Test
+        run: pnpm test
+
       - name: Build
-        id: build
+        run: pnpm run build
+
+      - name: Verify build assets
+        run: pnpm run verify:build
+
+      - name: Package release
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          pnpm install
-          npm run build
-          mkdir ${{ env.PLUGIN_NAME }}
-          cp dist/* ${{ env.PLUGIN_NAME }}
-          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
-          ls
+          test -s dist/main.js
+          test -s dist/manifest.json
+          test -s dist/styles.css
+          cmp manifest.json dist/manifest.json
+          mkdir -p release/slidev
+          cp dist/main.js dist/manifest.json dist/styles.css release/slidev/
+          cd release
+          zip -r "../slidev-${RELEASE_TAG}.zip" slidev
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create draft release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.event.inputs.version }}
-        with:
-          tag_name: ${{ github.event.inputs.version }}
-          release_name: ${{ github.event.inputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: Upload zip file
-        id: upload-zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ env.PLUGIN_NAME }}.zip
-          asset_name: ${{ env.PLUGIN_NAME }}-${{ steps.build.outputs.tag_name }}.zip
-          asset_content_type: application/zip
-
-      - name: Upload main.js
-        id: upload-main
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/main.js
-          asset_name: main.js
-          asset_content_type: text/javascript
-
-      - name: Upload manifest.json
-        id: upload-manifest
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/manifest.json
-          asset_name: manifest.json
-          asset_content_type: application/json
-
-      - name: Upload styles.css
-        id: upload-css
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/styles.css
-          asset_name: styles.css
-          asset_content_type: text/css
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --verify-tag \
+            --draft \
+            --title "$RELEASE_TAG" \
+            dist/main.js \
+            dist/manifest.json \
+            dist/styles.css \
+            "slidev-${RELEASE_TAG}.zip"

@@ -1,9 +1,9 @@
 {
   "id": "slidev",
   "name": "Slidev",
-  "version": "0.0.17",
-  "minAppVersion": "0.15.0",
-  "description": "Create Markdown-based presentations in Obsidian using slidev",
+  "version": "0.0.18",
+  "minAppVersion": "1.0.0",
+  "description": "Create Markdown-based presentations in Obsidian using Slidev.",
   "author": "Nir Tamir",
   "authorUrl": "https://github.com/nirtamir2",
   "fundingUrl": "https://github.com/sponsors/nirtamir2",

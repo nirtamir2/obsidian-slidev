@@ -19,7 +19,13 @@ paths were unsafe and non-portable.
 
 Resolve `bin.slidev` from the configured project's installed
 `@slidev/cli/package.json`, resolve an external Node executable, and spawn Node
-with the CLI, note, and port as separate arguments with `shell: false`.
+with the CLI, a project-local temporary entry, and the port as separate
+arguments with `shell: false`. The temporary entry imports the active note and
+copies its deck headmatter. A companion temporary addon contributes only a
+Vite file-system allowlist for the vault. This keeps Slidev's dependency root
+in the configured project, retains the project's components and configuration,
+and preserves source-relative assets and live updates for a vault stored
+elsewhere.
 
 Node and the local Slidev dependency remain explicit user prerequisites. The
 plugin diagnoses them but does not install or download them.
@@ -39,3 +45,5 @@ plugin diagnoses them but does not install or download them.
 - Users with Node installed only through a shell-specific version manager may
   need to configure the absolute Node executable path.
 - Projects must have a conventional `node_modules/@slidev/cli` installation.
+- Projects must be writable while the plugin creates and removes a temporary
+  `.obsidian-slidev-<id>.md` entry and `.obsidian-slidev-<id>/` bridge.
