@@ -1,6 +1,8 @@
-# Slidev
+# Slidev for Obsidian
 
-Preview Markdown presentations from Obsidian with [Slidev](https://sli.dev/).
+Preview Markdown presentations from your Obsidian vault with
+[Slidev](https://sli.dev/). The plugin opens the active note in an embedded
+presentation view and keeps the displayed slide aligned with your cursor.
 
 [![Slidev presentation view in Obsidian](./docs/screenshot.png)](./docs/screencast.mp4)
 
@@ -10,7 +12,9 @@ Preview Markdown presentations from Obsidian with [Slidev](https://sli.dev/).
 ## Requirements
 
 - The desktop version of Obsidian. The plugin starts a local Node.js process and does not support mobile Obsidian.
-- [Node.js](https://nodejs.org/en/download) supported by your Slidev project. The current version of Slidev requires Node.js 20.12 or later.
+- [Node.js](https://nodejs.org/en/download) compatible with the version of
+  Slidev installed in your project. Check Slidev's own installation output or
+  package requirements when choosing a Node.js version.
 - A Slidev project with `@slidev/cli` installed locally in its `node_modules` directory. A global `slidev` command is neither required nor used.
 - Write access to the Slidev project while a presentation starts. The plugin creates a hidden temporary entry and bridge configuration there so Slidev can use that project's themes, addons, and components with notes stored elsewhere.
 
@@ -32,9 +36,11 @@ The plugin does not install or update Node.js, Slidev, themes, or project depend
 3. Create `<your-vault>/.obsidian/plugins/slidev/` and place the three files in that directory.
 4. Restart Obsidian, then enable **Slidev** under **Settings → Community plugins**.
 
-## Set up Slidev
+## Configure Slidev
 
-Create a Slidev project by following the [official getting-started guide](https://sli.dev/guide/) and install its dependencies. For example:
+Create a Slidev project by following the
+[official getting-started guide](https://sli.dev/guide/) and install its
+dependencies. For example:
 
 ```sh
 pnpm create slidev
@@ -42,14 +48,41 @@ cd <your-slidev-project>
 pnpm install
 ```
 
-Then open **Settings → Slidev** and configure:
+Then open **Settings → Slidev**:
 
-1. **Slidev project folder**: the project directory that contains `node_modules/@slidev/cli/package.json`.
-2. **Node.js executable**: leave this empty to find `node` from Obsidian's inherited `PATH`, or enter the absolute executable path if a shell-based version manager is not visible to Obsidian.
-3. **Port**: the local port for the Slidev server. The default is `3030`.
-4. Select **Verify** and resolve any reported setup problem.
+1. Set **Slidev project folder** to the project directory containing
+   `node_modules/@slidev/cli/package.json`.
+2. Leave **Node.js executable** empty to use `node` from Obsidian's inherited
+   `PATH`. If Obsidian cannot find a shell-managed Node.js installation, enter
+   the absolute path to the executable.
+3. Keep the default **Port** (`3030`) or choose a free port from 1 through 65535.
+4. Select **Verify** beside the project folder and resolve any reported issue.
 
-Open a Markdown note and run **Slidev: Open presentation view** from the command palette. If a Slidev server already responds on the configured port, the plugin connects to it. Otherwise, it starts the configured project's local Slidev CLI for the active note.
+The other settings are optional:
+
+- **Show slide numbers in reading view** labels Slidev separators with the
+  number of the following slide.
+- **Debug mode** adds server controls and process output to the presentation
+  view.
+
+## Present a note
+
+1. Open an existing Markdown note stored in a local vault.
+2. Run **Slidev: Open presentation view** from the command palette, or select
+   the presentation icon in the ribbon.
+3. If no server responds on the configured port, select **Start Slidev
+   server**. The view also attempts to start it when opened.
+
+The plugin connects to an existing server on the configured port when one is
+available. Otherwise, it launches the configured project's local Slidev CLI
+for the active note. Closing the view stops only the process started by that
+view. Changing the active note restarts that owned process for the new note.
+
+Use standard Slidev Markdown in the note, including `---` slide separators.
+The buttons above the embedded deck open the current slide in a browser or open
+Slidev's presenter view.
+
+If startup fails, see [Common problems](./docs/common-problems.md).
 
 ## Disclosures
 
@@ -60,7 +93,7 @@ Slidev preserves Obsidian's offline-first model, with the following local access
 - **External process:** When a presentation needs a server, the plugin starts the configured Node.js executable with the project-local Slidev CLI and the temporary project-local entry as separate arguments, without a shell. That entry imports the active Markdown file. The plugin stops only the process it started when the presentation view closes; it does not stop a server that was already running.
 - **Trusted content:** Slidev presentations can compile and execute Vue/JavaScript and read files they reference. Only launch notes, themes, addons, and project code you trust.
 
-## Development
+## Contributing
 
 ```sh
 git clone https://github.com/nirtamir2/obsidian-slidev.git
@@ -71,9 +104,30 @@ pnpm run type-check
 pnpm run build
 ```
 
-Production builds are written to `dist/`. To build directly into a development vault, set `OUT_DIR` to that vault's `.obsidian/plugins/slidev` directory in a local Vite environment file.
+Useful commands:
 
-[See common development problems](./docs/common-problems.md).
+| Command                 | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `pnpm dev`              | Watch source files and rebuild in development mode |
+| `pnpm test`             | Run the Vitest test suite once                     |
+| `pnpm run lint`         | Check TypeScript, JavaScript, and JSON with ESLint |
+| `pnpm run format:check` | Check formatting with Prettier                     |
+| `pnpm run type-check`   | Check TypeScript without emitting files            |
+| `pnpm run build`        | Create a production build                          |
+| `pnpm run verify:build` | Verify the generated plugin artifacts              |
+| `pnpm run ci`           | Run the complete local CI pipeline                 |
+
+Production builds are written to `dist/`. To build directly into a development
+vault, set `OUT_DIR` to the vault's `.obsidian/plugins/slidev` directory in
+`.env.development.local`, then run `pnpm dev`:
+
+```dotenv
+OUT_DIR=/absolute/path/to/vault/.obsidian/plugins/slidev
+```
+
+Do not commit that machine-specific environment file. See
+[Common problems](./docs/common-problems.md#development-build-output) if the
+output is not where you expect.
 
 ## Credits
 
