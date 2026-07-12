@@ -47,12 +47,12 @@ export class SlidevPlugin extends Plugin {
       },
     });
 
-    this.registerDomEvent(document, "click", () => {
+    this.registerDomEvent(window.activeDocument, "click", () => {
       this.navigateToCurrentSlide();
     });
 
     this.registerDomEvent(
-      document,
+      window.activeDocument,
       "keydown",
       debounce(() => {
         this.navigateToCurrentSlide();

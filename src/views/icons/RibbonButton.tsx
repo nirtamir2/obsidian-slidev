@@ -11,7 +11,7 @@ export function RibbonButton(props: {
       class="clickable-icon side-dock-ribbon-action slidev-plugin-ribbon-class"
       aria-label={props.label}
       data-tooltip-position="top"
-      // eslint-disable-next-line jsx-a11y/aria-props
+      // eslint-disable-next-line jsx-a11y/aria-props -- Obsidian reads this custom ARIA-style attribute to delay its native tooltip.
       aria-label-delay="300"
       onClick={() => {
         props.onClick();

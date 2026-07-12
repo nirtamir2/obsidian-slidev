@@ -4,9 +4,7 @@ export default nirtamir2(
   {
     formatters: true,
     solid: true,
-    typescript: {
-      tsconfigPath: "./tsconfig.json",
-    },
+    typescript: true,
   },
   [
     {
@@ -28,6 +26,11 @@ export default nirtamir2(
         "ssr-friendly/no-dom-globals-in-module-scope": "off",
         "unicorn/prefer-global-this": "off",
         "sonarjs/os-command": "off",
+        "e18e/prefer-array-from-map": "off",
+        "e18e/prefer-static-regex": "off",
+        "n/prefer-global/buffer": "off",
+        "@eslint-react/no-use-context": "off",
+        "@eslint-react/no-context-provider": "off",
         "eslint-plugin-sort-destructure-keys-typescript/sort-jsx-attributes-by-type":
           "off",
       },

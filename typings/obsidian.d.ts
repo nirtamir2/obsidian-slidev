@@ -29,7 +29,7 @@ declare module "obsidian" {
     config: {
       attachmentFolderPath: string;
     };
-    on(name: "raw", callback: (file: string) => void, ctx?: any): EventRef;
+    on(name: "raw", callback: (file: string) => void, ctx?: unknown): EventRef;
   }
 
   export interface Workspace {

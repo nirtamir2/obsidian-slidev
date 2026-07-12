@@ -1,5 +1,5 @@
-import builtins from "builtin-modules";
 import { readFile } from "node:fs/promises";
+import { builtinModules } from "node:module";
 import path from "node:path";
 import type { Plugin, UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";
@@ -134,8 +134,8 @@ export default defineConfig(async ({ mode }) => {
           "@lezer/common",
           "@lezer/highlight",
           "@lezer/lr",
-          ...builtins,
-          ...builtins.map((module) => `node:${module}`),
+          ...builtinModules,
+          ...builtinModules.map((module) => `node:${module}`),
         ],
       },
     },

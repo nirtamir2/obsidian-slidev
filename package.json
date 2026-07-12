@@ -1,9 +1,9 @@
 {
   "name": "obsidian-slidev",
   "type": "module",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
-  "description": "Create Markdown-based presentations in Obsidian using Slidev.",
+  "description": "Create Markdown-based presentations using Slidev.",
   "author": "Nir Tamir <nirtamir2@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -31,16 +31,14 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^1.52.6",
-    "@nirtamir2/eslint-config": "^0.1.17",
+    "@eslint-react/eslint-plugin": "^4.2.3",
+    "@nirtamir2/eslint-config": "^0.2.7",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^24.3.0",
-    "builtin-modules": "5.0.0",
-    "eslint": "^9.33.0",
-    "eslint-plugin-format": "^1.0.1",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint": "^10.7.0",
+    "eslint-plugin-format": "^2.0.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.20",
     "eslint-plugin-react-you-might-not-need-an-effect": "^0.4.2",
     "eslint-plugin-solid": "^0.14.5",
@@ -53,5 +51,10 @@
     "vite-plugin-solid": "^2.11.12",
     "vite-plugin-static-copy": "^3.1.2",
     "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "@typescript-eslint/utils": "^8.63.0"
+    }
   }
 }
