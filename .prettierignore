@@ -1,4 +1,5 @@
 .editorconfig
+pnpm-lock.yaml
 slidev-template
 main.js
 manifest.json

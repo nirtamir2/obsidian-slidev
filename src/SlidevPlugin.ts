@@ -15,7 +15,7 @@ import {
 import { activateSlidevView } from "./views/activateSlidevView";
 
 export class SlidevPlugin extends Plugin {
-  settings: SlidevPluginSettings = { ...DEFAULT_SETTINGS };
+  override settings: SlidevPluginSettings = { ...DEFAULT_SETTINGS };
 
   override async onload() {
     await this.loadSettings();

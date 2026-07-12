@@ -95,6 +95,9 @@ Slidev preserves Obsidian's offline-first model, with the following local access
 
 ## Contributing
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full development and pull
+request guide. The quick setup is:
+
 ```sh
 git clone https://github.com/nirtamir2/obsidian-slidev.git
 cd obsidian-slidev
@@ -110,7 +113,7 @@ Useful commands:
 | ----------------------- | -------------------------------------------------- |
 | `pnpm dev`              | Watch source files and rebuild in development mode |
 | `pnpm test`             | Run the Vitest test suite once                     |
-| `pnpm run lint`         | Check TypeScript, JavaScript, and JSON with ESLint |
+| `pnpm run lint`         | Check supported repository files with ESLint       |
 | `pnpm run format:check` | Check formatting with Prettier                     |
 | `pnpm run type-check`   | Check TypeScript without emitting files            |
 | `pnpm run build`        | Create a production build                          |

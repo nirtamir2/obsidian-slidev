@@ -8,7 +8,7 @@ export default nirtamir2(
   },
   [
     {
-      ignores: ["typings/*", "*/electron.d.ts"],
+      ignores: ["slidev-template/**", "typings/*", "*/electron.d.ts"],
     },
     {
       rules: {

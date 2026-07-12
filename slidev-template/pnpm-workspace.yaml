@@ -1,0 +1,18 @@
+packages:
+  - "."
+
+allowBuilds:
+  esbuild: true
+
+overrides:
+  defu: "^6.1.7"
+  dompurify: "^3.4.12"
+  "js-yaml@<4": "3.15.0"
+  "linkify-it@5": "^5.0.1"
+  lodash-es: "^4.18.1"
+  markdown-it: "^14.3.0"
+  mdast-util-to-hast: "^13.2.1"
+  "picomatch@<3": "^2.3.2"
+  "picomatch@>=4 <5": "^4.0.5"
+  tsx: "^4.23.0"
+  "uuid@11": "^11.1.1"

@@ -1,0 +1,27 @@
+shellEmulator: true
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - semver@6.3.1
+
+packages:
+  - .
+
+allowBuilds:
+  unrs-resolver: false
+
+overrides:
+  "@typescript-eslint/utils": ^8.63.0
+  tsx: ^4.23.0
+
+peerDependencyRules:
+  allowedVersions:
+    "@nirtamir2/eslint-config>@trivago/prettier-plugin-sort-imports": "6"
+    "@nirtamir2/eslint-config>eslint-plugin-format": "2"
+    "@nirtamir2/eslint-config>eslint-plugin-react-refresh": "0.5"
+    "@nirtamir2/eslint-config>eslint-plugin-react-you-might-not-need-an-effect": "1"
+    "@nirtamir2/eslint-config>prettier-plugin-packagejson": "3"
+    eslint-plugin-clsx>eslint: "10"
+    eslint-plugin-import>eslint: "10"
+    eslint-plugin-jsx-a11y>eslint: "10"
+    eslint-plugin-no-use-extend-native>eslint: "10"
+    eslint-plugin-solid>eslint: "10"

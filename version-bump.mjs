@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import process from "node:process";
 
@@ -9,7 +9,6 @@ const version = process.argv.at(2) ?? pkg.version;
 if (version !== pkg.version) {
   pkg.version = version;
   writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
-  exec("git add package.json");
 }
 
 // read minAppVersion from manifest.json and bump version to target version
@@ -24,4 +23,5 @@ let versions = JSON.parse(readFileSync("versions.json", "utf8"));
 versions[pkg.version] = minAppVersion;
 writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
 
-exec("git add manifest.json versions.json");
+// eslint-disable-next-line sonarjs/no-os-command-from-path -- Git is a required developer tool; the argument vector avoids shell parsing.
+execFileSync("git", ["add", "manifest.json", "versions.json"]);
