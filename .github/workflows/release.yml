@@ -6,7 +6,10 @@ on:
       - "*"
 
 permissions:
+  artifact-metadata: write
+  attestations: write
   contents: write
+  id-token: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -81,18 +84,20 @@ jobs:
       - name: Verify build assets
         run: pnpm run verify:build
 
-      - name: Package release
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
+      - name: Verify supported release assets
         run: |
           test -s dist/main.js
           test -s dist/manifest.json
           test -s dist/styles.css
           cmp manifest.json dist/manifest.json
-          mkdir -p release/slidev
-          cp dist/main.js dist/manifest.json dist/styles.css release/slidev/
-          cd release
-          zip -r "../slidev-${RELEASE_TAG}.zip" slidev
+
+      - name: Attest release assets
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        with:
+          subject-path: |
+            dist/main.js
+            dist/manifest.json
+            dist/styles.css
 
       - name: Create draft release
         env:
@@ -105,5 +110,4 @@ jobs:
             --title "$RELEASE_TAG" \
             dist/main.js \
             dist/manifest.json \
-            dist/styles.css \
-            "slidev-${RELEASE_TAG}.zip"
+            dist/styles.css

@@ -26,15 +26,14 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
   const { watchFiles } = options;
 
   const {
-    app: {
-      vault: { adapter },
-      plugins,
-    },
+    app,
     manifest: { dir: pluginDir, id },
   } = plugin;
   const {
-    app: { vault },
-  } = plugin;
+    vault,
+    vault: { adapter },
+    plugins,
+  } = app;
 
   if (pluginDir == null) {
     throw new Error(`hmr.ts - pluginDir not found.`);
@@ -42,17 +41,13 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
 
   const restartPlugin = async () => {
     const dbgKey = "debug-plugin";
-    const oldDebug = localStorage.getItem(dbgKey);
+    const oldDebug: unknown = app.loadLocalStorage(dbgKey);
     try {
-      localStorage.setItem(dbgKey, "1");
+      app.saveLocalStorage(dbgKey, "1");
       await plugins.disablePlugin(id);
       await plugins.enablePlugin(id);
     } finally {
-      if (oldDebug == null) {
-        localStorage.removeItem(dbgKey);
-      } else {
-        localStorage.setItem(dbgKey, oldDebug);
-      }
+      app.saveLocalStorage(dbgKey, oldDebug ?? null);
     }
   };
 

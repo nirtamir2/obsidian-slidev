@@ -34,6 +34,11 @@ const serverProbeAttempts = 60;
 
 type ServerState = "checking" | "running" | "starting" | "stopped";
 
+interface ProbeTimer {
+  id: ReturnType<Window["setTimeout"]>;
+  owner: Window;
+}
+
 type LaunchPreparation =
   | { ok: true; prepared: PreparedSlidevLaunch }
   | { ok: false; message: string };
@@ -225,7 +230,7 @@ function SlidevPresentation(props: {
       </div>
 
       <iframe
-        // eslint-disable-next-line @eslint-react/dom/no-unsafe-iframe-sandbox
+        // eslint-disable-next-line @eslint-react/dom-no-unsafe-iframe-sandbox -- Slidev requires same-origin script access inside its sandboxed presentation frame.
         sandbox="allow-scripts allow-same-origin"
         src={props.src}
         title="Slidev presentation"
@@ -255,7 +260,7 @@ export const PresentationView = () => {
   let disposed = false;
   let generation = 0;
   let logIndex = 0;
-  let probeTimer: ReturnType<typeof setTimeout> | null = null;
+  let probeTimer: ProbeTimer | null = null;
 
   const commandLogModal = new CommandLogModal(app, commandLogMessages);
   const serverBaseUrl = () => getSlidevServerUrl(config.port);
@@ -267,7 +272,7 @@ export const PresentationView = () => {
 
   function clearProbeTimer() {
     if (probeTimer != null) {
-      clearTimeout(probeTimer);
+      probeTimer.owner.clearTimeout(probeTimer.id);
       probeTimer = null;
     }
   }
@@ -380,9 +385,11 @@ export const PresentationView = () => {
       return;
     }
 
-    probeTimer = setTimeout(() => {
+    const owner = window.activeWindow;
+    const id = owner.setTimeout(() => {
       void pollForServer(currentGeneration, attempt + 1);
     }, serverProbeIntervalMs);
+    probeTimer = { id, owner };
   }
 
   async function finishClosedProcess(
