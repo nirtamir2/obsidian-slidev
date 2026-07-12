@@ -2,9 +2,9 @@ import type { IconName, WorkspaceLeaf } from "obsidian";
 import { ItemView } from "obsidian";
 import { createRoot, onCleanup } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
-import { createStore } from "solid-js/store";
+import { createStore, reconcile } from "solid-js/store";
 import { insert } from "solid-js/web";
-import type { SlidevPluginSettings } from "../SlidevSettingTab";
+import type { SlidevPluginSettings } from "../settings";
 import { AppContext } from "./AppContext";
 import { PresentationView } from "./PresentationView";
 import { SettingsContext } from "./SettingsContext";
@@ -19,14 +19,20 @@ export class SlidevPresentationView extends ItemView {
     return -1;
   };
 
-  #dispose?: () => void;
+  #dispose: (() => void) | undefined;
+  #setSettings: SetStoreFunction<SlidevPluginSettings> | undefined;
 
   override getIcon(): IconName {
     return "presentation";
   }
   constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
     super(leaf);
-    this.settings = settings;
+    this.settings = { ...settings };
+  }
+
+  updateSettings(settings: SlidevPluginSettings) {
+    this.settings = { ...settings };
+    this.#setSettings?.(reconcile(this.settings));
   }
 
   onChangeLine(currentSlideNumber: number) {
@@ -42,8 +48,13 @@ export class SlidevPresentationView extends ItemView {
   }
 
   override async onOpen() {
+    const [settings, setSettings] = createStore<SlidevPluginSettings>({
+      ...this.settings,
+    });
+    this.#setSettings = setSettings;
+
     const [slidevStore, setSlidevStore] = createStore<SlidevStore>({
-      currentSlideNumber: 0,
+      currentSlideNumber: 1,
     });
     this.setSlidevStore = setSlidevStore;
 
@@ -56,7 +67,7 @@ export class SlidevPresentationView extends ItemView {
       insert(
         element,
         <AppContext.Provider value={this.app}>
-          <SettingsContext.Provider value={this.settings}>
+          <SettingsContext.Provider value={settings}>
             <SlidevStoreContext.Provider value={slidevStore}>
               <PresentationView />
             </SlidevStoreContext.Provider>
@@ -72,5 +83,7 @@ export class SlidevPresentationView extends ItemView {
 
   override async onClose() {
     this.#dispose?.();
+    this.#dispose = undefined;
+    this.#setSettings = undefined;
   }
 }

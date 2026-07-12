@@ -7,9 +7,6 @@ export default nirtamir2(
     typescript: {
       tsconfigPath: "./tsconfig.json",
     },
-    tailwindcss: {
-      entryPoint: "src/styles.css",
-    },
   },
   [
     {
@@ -18,7 +15,6 @@ export default nirtamir2(
     {
       rules: {
         "no-new": "off",
-        "tailwindcss/no-custom-classname": "off",
         "n/prefer-global/process": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/method-signature-style": "off",
@@ -34,19 +30,6 @@ export default nirtamir2(
         "sonarjs/os-command": "off",
         "eslint-plugin-sort-destructure-keys-typescript/sort-jsx-attributes-by-type":
           "off",
-        "better-tailwindcss/no-unregistered-classes": [
-          "warn",
-          {
-            ignore: [
-              "clickable-icon",
-              "side-dock-ribbon-action",
-              "slidev-plugin-ribbon-class",
-              "lucide",
-              "lucide-monitor-play",
-              "lucide-gantt-chart-square",
-            ],
-          },
-        ],
       },
     },
   ],

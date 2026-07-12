@@ -1,49 +1,26 @@
-import type { App } from "obsidian";
-import {
-  Notice,
-  Platform,
-  PluginSettingTab,
-  Setting,
-  debounce,
-} from "obsidian";
+import type { App, Debouncer } from "obsidian";
+import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type { SlidevPlugin } from "./SlidevPlugin";
-import { isSlidevCommandExistsInLocation } from "./utils/isSlidevCommandExistsInLocation";
-
-export interface SlidevPluginSettings {
-  port: number;
-  initialScript: string;
-  isDebug: boolean;
-  slidevTemplateLocation: string;
-  shouldRenderSlideNumberInMarkdownPreview: boolean;
-}
-
-export const DEFAULT_SETTINGS: SlidevPluginSettings = {
-  port: 3030,
-  initialScript: Platform.isWin ? "" : "source $HOME/.profile",
-  isDebug: false,
-  slidevTemplateLocation: "",
-  shouldRenderSlideNumberInMarkdownPreview: false,
-};
-
-function isPortNumber(parsedNumber: number) {
-  return (
-    Number.isInteger(parsedNumber) && parsedNumber > 0 && parsedNumber < 65535
-  );
-}
+import { diagnoseSlidevProject } from "./launcher/slidevLauncher";
+import { DEFAULT_SETTINGS, isPortNumber } from "./settings";
 
 export class SlidevSettingTab extends PluginSettingTab {
   plugin: SlidevPlugin;
+  private readonly saveSettingsDebounced: Debouncer<[], void>;
 
   constructor(app: App, plugin: SlidevPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+    this.saveSettingsDebounced = debounce(() => {
+      void plugin.saveSettings();
+    }, 750);
   }
 
   display(): void {
     this.containerEl.empty();
     this.addPortSetting();
-    this.addSlidevTemplateLocationSetting();
-    this.addInitialScriptSetting();
+    this.addSlidevProjectSetting();
+    this.addNodeExecutableSetting();
     this.addShouldRenderSlideNumberInMarkdownPreviewSetting();
     this.addDebugModeSetting();
   }
@@ -51,116 +28,119 @@ export class SlidevSettingTab extends PluginSettingTab {
   private addPortSetting() {
     new Setting(this.containerEl)
       .setName("Port")
-      .setDesc("Slidev port Number")
+      .setDesc("Port used by the local Slidev server (1–65535).")
       .addText((text) =>
         text
           .setPlaceholder(String(DEFAULT_SETTINGS.port))
           .setValue(String(this.plugin.settings.port))
-          .onChange(
-            debounce(async (value) => {
-              const parsedNumber = Number(value);
-              if (!isPortNumber(parsedNumber)) {
-                void new Notice("Port should be an integer");
-                return;
-              }
-              this.plugin.settings.port = parsedNumber;
-              await this.plugin.saveSettings();
-            }, 750),
-          ),
+          .onChange((value) => {
+            const parsedNumber = Number(value);
+            if (!isPortNumber(parsedNumber)) {
+              void new Notice("Port must be an integer between 1 and 65535.");
+              return;
+            }
+            this.plugin.settings.port = parsedNumber;
+            this.saveSettingsDebounced();
+          }),
       );
   }
 
   private addDebugModeSetting() {
     new Setting(this.containerEl)
       .setName("Debug mode")
-      .setDesc("Should show debug mode")
-      .addToggle((value) =>
-        value.setValue(this.plugin.settings.isDebug).onChange(
-          debounce(async (value) => {
+      .setDesc(
+        "Show server controls and process output in the presentation view.",
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.isDebug)
+          .onChange(async (value) => {
             this.plugin.settings.isDebug = value;
             await this.plugin.saveSettings();
-          }, 750),
-        ),
+          }),
       );
   }
 
   private addShouldRenderSlideNumberInMarkdownPreviewSetting() {
     new Setting(this.containerEl)
-      .setName("Markdown preview slide number")
-      .setDesc("Should render slide number in markdown preview")
-      .addToggle((value) =>
-        value
+      .setName("Show slide numbers in reading view")
+      .setDesc(
+        "Show the next slide number beside Slidev separators in reading view.",
+      )
+      .addToggle((toggle) =>
+        toggle
           .setValue(
             this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview,
           )
-          .onChange(
-            debounce(async (value) => {
-              this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview =
-                value;
-              await this.plugin.saveSettings();
-            }, 750),
-          ),
+          .onChange(async (value) => {
+            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview =
+              value;
+            await this.plugin.saveSettings();
+          }),
       );
   }
 
-  private addInitialScriptSetting() {
+  private addNodeExecutableSetting() {
     new Setting(this.containerEl)
-      .setName("Initial script")
-      .setDesc("The script to load Node.js to PATH")
+      .setName("Node.js executable")
+      .setDesc(
+        "Leave blank to find Node.js on PATH, or enter the full path to the Node.js executable.",
+      )
       .addText((text) =>
         text
-          .setPlaceholder(DEFAULT_SETTINGS.initialScript)
-          .setValue(this.plugin.settings.initialScript)
-          .onChange(
-            debounce(async (value) => {
-              this.plugin.settings.initialScript = value;
-              await this.plugin.saveSettings();
-            }, 750),
-          ),
+          .setPlaceholder("/path/to/node")
+          .setValue(this.plugin.settings.nodeExecutable)
+          .onChange((value) => {
+            this.plugin.settings.nodeExecutable = value.trim();
+            this.saveSettingsDebounced();
+          }),
       );
   }
 
-  private addSlidevTemplateLocationSetting() {
-    const templateLocationSetting = new Setting(this.containerEl)
-      .setName("Slidev template location")
-      .setDesc("The template location used by Slidev")
-      .addText((text) => {
+  private addSlidevProjectSetting() {
+    const projectSetting = new Setting(this.containerEl)
+      .setName("Slidev project folder")
+      .setDesc("Folder containing a project-local installation of @slidev/cli.")
+      .addText((text) =>
         text
-          .setPlaceholder(DEFAULT_SETTINGS.slidevTemplateLocation)
+          .setPlaceholder("/path/to/slidev-project")
           .setValue(this.plugin.settings.slidevTemplateLocation)
-          .onChange(
-            debounce(async (value) => {
-              this.plugin.settings.slidevTemplateLocation = value;
-              await this.plugin.saveSettings();
-            }, 750),
-          );
-      });
-
-    const templateLocationDescriptionNode = document.createElement("div");
-    templateLocationSetting.infoEl.append(templateLocationDescriptionNode);
-
-    async function handleVerifySlidevTemplate(location: string) {
-      const isValid = await isSlidevCommandExistsInLocation(location);
-      if (isValid) {
-        templateLocationDescriptionNode.textContent = "Location is valid";
-        templateLocationDescriptionNode.className = "text-xs text-green-500";
-      } else {
-        templateLocationDescriptionNode.textContent =
-          "Location is invalid. slidev command not exits.";
-        templateLocationDescriptionNode.className = "text-xs text-red-500";
-      }
-    }
-
-    templateLocationSetting.addButton((button) => {
-      button.setButtonText("Verify").onClick(() => {
-        void handleVerifySlidevTemplate(
-          this.plugin.settings.slidevTemplateLocation,
-        );
-      });
-
-      void handleVerifySlidevTemplate(
-        this.plugin.settings.slidevTemplateLocation,
+          .onChange((value) => {
+            this.plugin.settings.slidevTemplateLocation = value.trim();
+            this.saveSettingsDebounced();
+          }),
       );
+
+    const statusEl = projectSetting.infoEl.createDiv({
+      cls: "slidev-setting-status",
+    });
+
+    projectSetting.addButton((button) => {
+      button.setButtonText("Verify").onClick(async () => {
+        button.setDisabled(true);
+        statusEl.removeClass("slidev-setting-status--success");
+        statusEl.removeClass("slidev-setting-status--error");
+        statusEl.setText("Checking the local Slidev installation…");
+
+        try {
+          const diagnosis = await diagnoseSlidevProject({
+            projectPath: this.plugin.settings.slidevTemplateLocation,
+            nodeExecutable: this.plugin.settings.nodeExecutable,
+          });
+
+          if (diagnosis.ok) {
+            statusEl.addClass("slidev-setting-status--success");
+            statusEl.setText(
+              `Ready: @slidev/cli will run with ${diagnosis.project.nodeVersion}.`,
+            );
+          } else {
+            statusEl.addClass("slidev-setting-status--error");
+            statusEl.setText(diagnosis.message);
+          }
+        } finally {
+          button.setDisabled(false);
+        }
+      });
     });
   }
 }
