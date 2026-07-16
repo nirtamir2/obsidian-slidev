@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  getPresentationSurface,
-  getSetupButtonLabel,
-} from "./presentationState";
+import type { SlidevSetupState } from "../setup/SlidevSetupService";
+import { getQuickSetupControl } from "../setup/quickSetupState";
+import { getPresentationSurface } from "./presentationState";
 
 describe("presentation view state", () => {
   it("shows onboarding whenever no project is configured", () => {
@@ -20,9 +19,28 @@ describe("presentation view state", () => {
   });
 
   it("uses explicit setup, progress, and retry labels", () => {
-    expect(getSetupButtonLabel("idle")).toBe("Set up Slidev");
-    expect(getSetupButtonLabel("running")).toBe("Setting up…");
-    expect(getSetupButtonLabel("error")).toBe("Retry setup");
-    expect(getSetupButtonLabel("success")).toBe("Slidev is ready");
+    expect(getQuickSetupControl(createState("idle")).label).toBe(
+      "Set up Slidev",
+    );
+    expect(getQuickSetupControl(createState("running")).label).toBe(
+      "Setting up…",
+    );
+    expect(getQuickSetupControl(createState("error")).label).toBe(
+      "Retry setup",
+    );
+    expect(getQuickSetupControl(createState("success")).label).toBe(
+      "Slidev is ready",
+    );
   });
 });
+
+function createState(
+  status: SlidevSetupState["status"],
+): SlidevSetupState {
+  return {
+    logs: [],
+    message: "Status",
+    stage: "idle",
+    status,
+  };
+}

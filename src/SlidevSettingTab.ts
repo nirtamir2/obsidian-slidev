@@ -3,10 +3,15 @@ import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type { SlidevPlugin } from "./SlidevPlugin";
 import { diagnoseSlidevProject } from "./launcher/slidevLauncher";
 import { DEFAULT_SETTINGS, isPortNumber } from "./settings";
+import {
+  getQuickSetupControl,
+  shouldOfferQuickSetup,
+} from "./setup/quickSetupState";
 
 export class SlidevSettingTab extends PluginSettingTab {
   plugin: SlidevPlugin;
   private readonly saveSettingsDebounced: Debouncer<[], void>;
+  private unsubscribeSetup: (() => void) | null = null;
 
   constructor(app: App, plugin: SlidevPlugin) {
     super(app, plugin);
@@ -17,12 +22,63 @@ export class SlidevSettingTab extends PluginSettingTab {
   }
 
   override display(): void {
+    this.unsubscribeSetup?.();
+    this.unsubscribeSetup = null;
     this.containerEl.empty();
+    if (shouldOfferQuickSetup(this.plugin.settings.slidevTemplateLocation)) {
+      this.addQuickSetupSetting();
+    }
     this.addPortSetting();
     this.addSlidevProjectSetting();
     this.addNodeExecutableSetting();
     this.addShouldRenderSlideNumberInMarkdownPreviewSetting();
     this.addDebugModeSetting();
+  }
+
+  override hide(): void {
+    this.unsubscribeSetup?.();
+    this.unsubscribeSetup = null;
+    super.hide();
+  }
+
+  private addQuickSetupSetting() {
+    const quickSetup = new Setting(this.containerEl)
+      .setName("Quick setup")
+      .setDesc(
+        "Create .slidev in this vault, download the maintained packages, and run their npm install scripts.",
+      );
+    const statusEl = quickSetup.infoEl.createDiv({
+      cls: "slidev-setting-status",
+    });
+
+    quickSetup.addButton((button) => {
+      button.setCta().onClick(() => {
+        void this.plugin.setupController.start();
+      });
+
+      this.unsubscribeSetup = this.plugin.setupController.subscribe((state) => {
+        const control = getQuickSetupControl(state);
+        button.setButtonText(control.label).setDisabled(control.disabled);
+        statusEl.toggleClass(
+          "slidev-setting-status--error",
+          control.tone === "error",
+        );
+        statusEl.toggleClass(
+          "slidev-setting-status--success",
+          control.tone === "success",
+        );
+        statusEl.setText(control.message);
+
+        if (
+          control.status === "success" &&
+          !shouldOfferQuickSetup(this.plugin.settings.slidevTemplateLocation)
+        ) {
+          window.activeWindow.setTimeout(() => {
+            this.display();
+          }, 0);
+        }
+      });
+    });
   }
 
   private addPortSetting() {

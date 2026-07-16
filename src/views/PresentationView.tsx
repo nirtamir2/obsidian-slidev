@@ -21,6 +21,7 @@ import { terminateSlidevProcess } from "../launcher/slidevProcess";
 import { getSlidevServerUrl, probeSlidevServer } from "../server/slidevServer";
 import type { SlidevSetupController } from "../setup/SlidevSetupController";
 import type { SlidevSetupState } from "../setup/SlidevSetupService";
+import { getQuickSetupControl } from "../setup/quickSetupState";
 import { getVaultPath } from "../utils/getVaultPath";
 import { CommandLog } from "./CommandLog";
 import { CommandLogModal } from "./CommandLogModal";
@@ -28,10 +29,7 @@ import { SlidevStoreContext } from "./SlidevStoreContext";
 import { GanttChartSquareIcon } from "./icons/GanttChartSquareIcon";
 import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
 import { RibbonButton } from "./icons/RibbonButton";
-import {
-  getPresentationSurface,
-  getSetupButtonLabel,
-} from "./presentationState";
+import { getPresentationSurface } from "./presentationState";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
@@ -257,7 +255,7 @@ function SlidevSetupView(props: {
               props.onSetup();
             }}
           >
-            {getSetupButtonLabel(props.state.status)}
+            {getQuickSetupControl(props.state).label}
           </button>
           <button
             type="button"
