@@ -6,7 +6,7 @@
 - [x] Task 3: Own setup lifecycle and successful persistence in the plugin.
 - [x] Task 4: Add contextual onboarding to the presentation view.
 - [x] Task 5: Add quick setup to Slidev settings.
-- [ ] Checkpoint: Verify the end-to-end onboarding and existing-project flow.
+- [x] Checkpoint: Verify the end-to-end onboarding and existing-project flow.
 - [x] Task 6: Document quick setup and its trust boundaries.
-- [ ] Task 7: Run full CI and desktop smoke tests.
-- [ ] Checkpoint: Review the final diff and handoff.
+- [x] Task 7: Run full CI and desktop smoke tests.
+- [x] Checkpoint: Review the final diff and handoff.
