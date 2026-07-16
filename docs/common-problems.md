@@ -1,6 +1,8 @@
 # Common problems
 
-Start with **Settings → Slidev → Verify**. It checks the configured project,
+For quick-setup problems, select **Retry setup** and expand **View log** in the
+presentation view or **Settings → Slidev**. For a manually configured project,
+start with **Settings → Slidev → Verify**. Verification checks the project,
 its local `@slidev/cli` installation, and the Node.js executable without
 starting a presentation.
 
@@ -21,6 +23,40 @@ Use `which node` on macOS/Linux or `Get-Command node` in PowerShell to find the
 path. The plugin invokes that executable directly and does not source shell
 profile files. Enter the executable itself, not the containing directory and
 not a shell command such as `nvm use`.
+
+## npm was not found
+
+Quick setup needs npm's `npm-cli.js` installed alongside the configured Node.js
+executable. Install the standard Node.js distribution from
+[nodejs.org](https://nodejs.org/en/download), restart Obsidian, and retry. If
+you selected a custom Node.js executable in **Settings → Slidev**, make sure it
+belongs to an installation that also includes npm.
+
+The plugin invokes npm through Node.js with structured arguments. It does not
+run a shell command or use a globally installed `slidev` executable.
+
+## The `.slidev` folder is already in use
+
+Quick setup owns only the `<your-vault>/.slidev/` directory it created and
+marked. It stops rather than overwriting an existing folder, package file, or
+symlink it cannot verify as its own.
+
+Rename the existing `.slidev` folder, or configure that project manually if it
+already contains `node_modules/@slidev/cli/package.json`. Never remove it until
+you have checked that it does not contain work you need.
+
+## Quick setup did not finish
+
+Keep Obsidian open and retry with a working network connection. The plugin
+reuses its generated `package.json`, and npm can continue from files already
+downloaded. Expand **View log** to see npm's output.
+
+Quick setup creates `.slidev/package.json`, npm's lockfile, and `node_modules`
+inside the vault. It runs npm install scripts, just like running `npm install`
+in a terminal. The plugin never deletes this folder automatically. If you no
+longer want the generated project, close its presentation view, confirm the
+`package.json` contains the `obsidianSlidev` marker, and delete `.slidev`
+yourself.
 
 ## The local Slidev package is missing
 
