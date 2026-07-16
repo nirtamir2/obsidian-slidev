@@ -6,8 +6,11 @@ import {
 import { SlidevSettingTab } from "./SlidevSettingTab";
 import type { SlidevPluginSettings } from "./settings";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./settings";
+import { SlidevSetupController } from "./setup/SlidevSetupController";
+import { SlidevSetupService } from "./setup/SlidevSetupService";
 import { parseSlideRanges } from "./slides/slideRanges";
 import "./styles.css";
+import { getVaultPath } from "./utils/getVaultPath";
 import {
   SLIDEV_PRESENTATION_VIEW_TYPE,
   SlidevPresentationView,
@@ -16,9 +19,29 @@ import { activateSlidevView } from "./views/activateSlidevView";
 
 export class SlidevPlugin extends Plugin {
   override settings: SlidevPluginSettings = { ...DEFAULT_SETTINGS };
+  setupController!: SlidevSetupController;
 
   override async onload() {
     await this.loadSettings();
+    this.setupController = new SlidevSetupController({
+      createInput: () => {
+        const input = { vaultRoot: getVaultPath(this.app.vault) };
+        return this.settings.nodeExecutable.length === 0
+          ? input
+          : { ...input, nodeExecutable: this.settings.nodeExecutable };
+      },
+      persistProjectPath: async (projectPath) => {
+        const previousProjectPath = this.settings.slidevTemplateLocation;
+        this.settings.slidevTemplateLocation = projectPath;
+        try {
+          await this.saveSettings();
+        } catch (error) {
+          this.settings.slidevTemplateLocation = previousProjectPath;
+          throw error;
+        }
+      },
+      service: new SlidevSetupService(),
+    });
 
     this.addSettingTab(new SlidevSettingTab(this.app, this));
 
@@ -58,6 +81,10 @@ export class SlidevPlugin extends Plugin {
         this.navigateToCurrentSlide();
       }, 100),
     );
+  }
+
+  override onunload() {
+    void this.setupController.dispose();
   }
 
   private registerSlideNumberPostProcessor() {

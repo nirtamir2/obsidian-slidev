@@ -29,7 +29,8 @@ export type SlidevSetupErrorCode =
   | "filesystem-error"
   | "install-failed"
   | "verification-failed"
-  | "cancelled";
+  | "cancelled"
+  | "settings-error";
 
 export interface SlidevSetupLogMessage {
   type: "error" | "message";
