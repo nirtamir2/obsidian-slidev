@@ -13,6 +13,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SlidevLaunchInput, SlidevLaunchSpec } from "./slidevLauncher";
 import {
+  diagnoseNodeRuntime,
   diagnoseSlidevLaunch,
   diagnoseSlidevProject,
   spawnSlidev,
@@ -25,6 +26,53 @@ interface FixtureOptions {
   entryName?: string;
   cliSource?: string;
 }
+
+describe("diagnoseNodeRuntime", () => {
+  it("returns the real Node.js executable reported by the runtime", async () => {
+    const configuredExecutable = path.resolve("configured", "node-shim");
+    const realExecutable = path.resolve("real", "node");
+
+    const diagnosis = await diagnoseNodeRuntime(
+      { nodeExecutable: configuredExecutable },
+      {
+        env: {},
+        isFile: async (filePath) => filePath === configuredExecutable,
+        probeNode: async () => ({
+          nodeExecutable: realExecutable,
+          nodeVersion: "v24.4.1",
+        }),
+      },
+    );
+
+    expect(diagnosis).toEqual({
+      ok: true,
+      runtime: {
+        nodeExecutable: realExecutable,
+        nodeVersion: "v24.4.1",
+      },
+    });
+  });
+
+  it("reports missing and invalid Node.js separately", async () => {
+    const missing = await diagnoseNodeRuntime(
+      { nodeExecutable: "/missing/node" },
+      { env: {}, isFile: async () => false },
+    );
+    const invalid = await diagnoseNodeRuntime(
+      { nodeExecutable: "/invalid/node" },
+      {
+        env: {},
+        isFile: async () => true,
+        probeNode: async () => {
+          throw new Error("not Node.js");
+        },
+      },
+    );
+
+    expect(missing).toMatchObject({ ok: false, code: "missing-node" });
+    expect(invalid).toMatchObject({ ok: false, code: "invalid-node" });
+  });
+});
 
 describe("diagnoseSlidevProject", () => {
   let testRoot = "";
@@ -97,7 +145,10 @@ describe("diagnoseSlidevProject", () => {
       { projectPath: fixture.projectPath },
       {
         env: { PATH: path.relative(process.cwd(), nodeDirectory) },
-        probeNode: async () => "v24.0.0",
+        probeNode: async () => ({
+          nodeExecutable: nodePath,
+          nodeVersion: "v24.0.0",
+        }),
       },
     );
 

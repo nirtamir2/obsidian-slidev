@@ -31,6 +31,15 @@ export interface SlidevProjectInput {
   nodeExecutable?: string;
 }
 
+export interface NodeRuntimeInput {
+  nodeExecutable?: string;
+}
+
+export interface NodeRuntime {
+  nodeExecutable: string;
+  nodeVersion: string;
+}
+
 export interface SlidevProject {
   projectPath: string;
   cliPath: string;
@@ -64,6 +73,14 @@ export type SlidevProjectDiagnosis =
       message: string;
     };
 
+export type NodeRuntimeDiagnosis =
+  | { ok: true; runtime: NodeRuntime }
+  | {
+      ok: false;
+      code: "missing-node" | "invalid-node";
+      message: string;
+    };
+
 interface SlidevPackageJson {
   name?: unknown;
   bin?: unknown;
@@ -71,7 +88,8 @@ interface SlidevPackageJson {
 
 interface SlidevLauncherDependencies {
   env: ProcessEnvironment;
-  probeNode(executable: string): Promise<string>;
+  isFile(filePath: string): Promise<boolean>;
+  probeNode(executable: string): Promise<NodeRuntime>;
 }
 
 interface SlidevSpawnOptions {
@@ -90,17 +108,29 @@ export type SpawnSlidevImplementation = (
 
 const defaultDependencies: SlidevLauncherDependencies = {
   env: process.env,
+  isFile,
   async probeNode(executable) {
-    const { stdout } = await execFileAsync(executable, ["--version"], {
+    const expression =
+      "JSON.stringify({ nodeExecutable: process.execPath, nodeVersion: process.version })";
+    const { stdout } = await execFileAsync(executable, ["-p", expression], {
       encoding: "utf8",
       timeout: nodeProbeTimeoutMs,
       windowsHide: true,
     });
-    const version = stdout.trim();
-    if (!/^v\d+\.\d+\.\d+/.test(version)) {
+    const runtime: unknown = JSON.parse(stdout.trim());
+    if (
+      !isRecord(runtime) ||
+      typeof runtime["nodeExecutable"] !== "string" ||
+      !path.isAbsolute(runtime["nodeExecutable"]) ||
+      typeof runtime["nodeVersion"] !== "string" ||
+      !/^v\d+\.\d+\.\d+/.test(runtime["nodeVersion"])
+    ) {
       throw new Error("Unexpected Node.js version output");
     }
-    return version;
+    return {
+      nodeExecutable: runtime["nodeExecutable"],
+      nodeVersion: runtime["nodeVersion"],
+    };
   },
 };
 
@@ -231,26 +261,11 @@ export async function diagnoseSlidevProject(
     );
   }
 
-  const nodeExecutable = await resolveNodeExecutable(
-    input.nodeExecutable,
-    deps.env,
-  );
-  if (nodeExecutable == null) {
-    return projectFailure(
-      "missing-node",
-      "Node.js was not found. Configure its executable path in Slidev settings.",
-    );
+  const runtimeDiagnosis = await diagnoseNodeRuntime(input, deps);
+  if (!runtimeDiagnosis.ok) {
+    return runtimeDiagnosis;
   }
-
-  let nodeVersion = "";
-  try {
-    nodeVersion = await deps.probeNode(nodeExecutable);
-  } catch {
-    return projectFailure(
-      "invalid-node",
-      "The configured Node.js executable could not be started.",
-    );
-  }
+  const { nodeExecutable, nodeVersion } = runtimeDiagnosis.runtime;
 
   return {
     ok: true,
@@ -261,6 +276,33 @@ export async function diagnoseSlidevProject(
       nodeVersion,
     },
   };
+}
+
+export async function diagnoseNodeRuntime(
+  input: NodeRuntimeInput,
+  dependencies: Partial<SlidevLauncherDependencies> = {},
+): Promise<NodeRuntimeDiagnosis> {
+  const deps = { ...defaultDependencies, ...dependencies };
+  const configuredExecutable = await resolveNodeExecutable(
+    input.nodeExecutable,
+    deps.env,
+    deps.isFile,
+  );
+  if (configuredExecutable == null) {
+    return runtimeFailure(
+      "missing-node",
+      "Node.js was not found. Configure its executable path in Slidev settings.",
+    );
+  }
+
+  try {
+    return { ok: true, runtime: await deps.probeNode(configuredExecutable) };
+  } catch {
+    return runtimeFailure(
+      "invalid-node",
+      "The configured Node.js executable could not be started.",
+    );
+  }
 }
 
 export function spawnSlidev(
@@ -287,6 +329,13 @@ function projectFailure(
   code: Exclude<SlidevLaunchErrorCode, "invalid-port" | "missing-entry">,
   message: string,
 ): SlidevProjectDiagnosis {
+  return { ok: false, code, message };
+}
+
+function runtimeFailure(
+  code: "missing-node" | "invalid-node",
+  message: string,
+): NodeRuntimeDiagnosis {
   return { ok: false, code, message };
 }
 
@@ -338,22 +387,24 @@ async function isFile(filePath: string): Promise<boolean> {
 async function resolveNodeExecutable(
   configuredExecutable: string | undefined,
   env: ProcessEnvironment,
+  isFileImplementation: (filePath: string) => Promise<boolean>,
 ): Promise<string | null> {
   const configured = stripSurroundingQuotes(configuredExecutable?.trim() ?? "");
   if (configured.length > 0) {
     const expandedPath = expandHome(configured);
     if (path.isAbsolute(expandedPath) || hasPathSeparator(expandedPath)) {
       const absolutePath = path.resolve(expandedPath);
-      return (await isFile(absolutePath)) ? absolutePath : null;
+      return (await isFileImplementation(absolutePath)) ? absolutePath : null;
     }
-    return await findOnPath(expandedPath, env);
+    return await findOnPath(expandedPath, env, isFileImplementation);
   }
-  return await findOnPath("node", env);
+  return await findOnPath("node", env, isFileImplementation);
 }
 
 async function findOnPath(
   executableName: string,
   env: ProcessEnvironment,
+  isFileImplementation: (filePath: string) => Promise<boolean>,
 ): Promise<string | null> {
   const pathValue = env["PATH"] ?? env["Path"] ?? env["path"];
   if (pathValue == null || pathValue.length === 0) {
@@ -372,7 +423,7 @@ async function findOnPath(
         absoluteDirectory,
         `${executableName}${extension}`,
       );
-      if (await isFile(candidate)) {
+      if (await isFileImplementation(candidate)) {
         return candidate;
       }
     }
