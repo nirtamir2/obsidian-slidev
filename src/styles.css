@@ -54,6 +54,42 @@
   font-weight: var(--font-semibold);
 }
 
+.slidev-setup {
+  width: min(100%, 36rem);
+}
+
+.slidev-setup-title {
+  margin: 0 0 var(--size-4-2);
+  color: var(--text-normal);
+  font-size: var(--font-ui-larger);
+}
+
+.slidev-setup-disclosure,
+.slidev-setup-progress,
+.slidev-setup-hint {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  text-align: start;
+}
+
+.slidev-setup-disclosure p,
+.slidev-setup-hint {
+  color: var(--text-muted);
+}
+
+.slidev-setup-progress {
+  border-inline-start: 3px solid var(--interactive-accent);
+}
+
+.slidev-setup-progress--error {
+  border-inline-start-color: var(--text-error);
+  color: var(--text-error);
+}
+
 .slidev-diagnostic {
   width: 100%;
   box-sizing: border-box;

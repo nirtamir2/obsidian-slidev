@@ -19,6 +19,8 @@ import type { SlidevLaunchSpec } from "../launcher/slidevLauncher";
 import { diagnoseSlidevLaunch, spawnSlidev } from "../launcher/slidevLauncher";
 import { terminateSlidevProcess } from "../launcher/slidevProcess";
 import { getSlidevServerUrl, probeSlidevServer } from "../server/slidevServer";
+import type { SlidevSetupController } from "../setup/SlidevSetupController";
+import type { SlidevSetupState } from "../setup/SlidevSetupService";
 import { getVaultPath } from "../utils/getVaultPath";
 import { CommandLog } from "./CommandLog";
 import { CommandLogModal } from "./CommandLogModal";
@@ -26,6 +28,10 @@ import { SlidevStoreContext } from "./SlidevStoreContext";
 import { GanttChartSquareIcon } from "./icons/GanttChartSquareIcon";
 import { MonitorPlayIcon } from "./icons/MonitorPlayIcon";
 import { RibbonButton } from "./icons/RibbonButton";
+import {
+  getPresentationSurface,
+  getSetupButtonLabel,
+} from "./presentationState";
 import { useApp } from "./useApp";
 import { useSettings } from "./useSettings";
 
@@ -202,6 +208,87 @@ function SlidevFallback(props: {
   );
 }
 
+function SlidevSetupView(props: {
+  settingsHint: boolean;
+  state: SlidevSetupState;
+  onOpenSettings: () => void;
+  onSetup: () => void;
+  onShowLog: () => void;
+}) {
+  const isRunning = () => props.state.status === "running";
+  const hasStatus = () => props.state.status !== "idle";
+
+  return (
+    <div class="slidev-view-state">
+      <div class="slidev-stack slidev-stack--centered slidev-setup">
+        <div>
+          <h2 class="slidev-setup-title">Set up Slidev</h2>
+          <p>
+            Create a ready-to-use Slidev project for this vault—no terminal or
+            project path required.
+          </p>
+        </div>
+        <div class="slidev-setup-disclosure">
+          <strong>Quick setup creates</strong>
+          <p>
+            A hidden <code>.slidev</code> folder in this vault, then downloads
+            the maintained Slidev packages and runs their npm install scripts.
+          </p>
+        </div>
+        <Show when={hasStatus()}>
+          <div
+            aria-busy={isRunning()}
+            aria-live="polite"
+            classList={{
+              "slidev-setup-progress": true,
+              "slidev-setup-progress--error": props.state.status === "error",
+            }}
+            role={props.state.status === "error" ? "alert" : "status"}
+          >
+            {props.state.message}
+          </div>
+        </Show>
+        <div class="slidev-actions">
+          <button
+            type="button"
+            class="mod-cta"
+            disabled={isRunning() || props.state.status === "success"}
+            onClick={() => {
+              props.onSetup();
+            }}
+          >
+            {getSetupButtonLabel(props.state.status)}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onOpenSettings();
+            }}
+          >
+            Open settings
+          </button>
+          <Show when={props.state.logs.length > 0}>
+            <button
+              type="button"
+              onClick={() => {
+                props.onShowLog();
+              }}
+            >
+              View log
+            </button>
+          </Show>
+        </div>
+        <Show when={props.settingsHint}>
+          <p class="slidev-setup-hint" role="status">
+            Open <strong>Settings → Slidev</strong> to choose an existing
+            project or configure Node.js manually.
+          </p>
+        </Show>
+      </div>
+    </div>
+  );
+}
+
 function SlidevPresentation(props: {
   title: string;
   onOpenSlideUrl: () => void;
@@ -239,10 +326,13 @@ function SlidevPresentation(props: {
   );
 }
 
-export const PresentationView = () => {
+export const PresentationView = (props: {
+  setupController: SlidevSetupController;
+}) => {
   const app = useApp();
   const config = useSettings();
   const store = useContext(SlidevStoreContext);
+  const setupController = untrack(() => props.setupController);
 
   const [commandLogMessages, setCommandLogMessages] = createStore<
     Array<LogMessage>
@@ -252,6 +342,8 @@ export const PresentationView = () => {
   );
   const [diagnostic, setDiagnostic] = createSignal<string | null>(null);
   const [serverState, setServerState] = createSignal<ServerState>("checking");
+  const [settingsHint, setSettingsHint] = createSignal(false);
+  const [setupState, setSetupState] = createSignal(setupController.getState());
 
   let childProcess: ChildProcessWithoutNullStreams | null = null;
   let launchArtifactCleanup: (() => Promise<void>) | null = null;
@@ -262,6 +354,7 @@ export const PresentationView = () => {
   let probeTimer: ProbeTimer | null = null;
 
   const commandLogModal = new CommandLogModal(app, commandLogMessages);
+  let setupLogModal: CommandLogModal | null = null;
   const serverBaseUrl = () => getSlidevServerUrl(config.port);
 
   function appendLog(message: LogMessage) {
@@ -462,6 +555,11 @@ export const PresentationView = () => {
     setDiagnostic(null);
     setServerState("checking");
 
+    if (config.slidevTemplateLocation.trim().length === 0) {
+      setServerState("stopped");
+      return;
+    }
+
     if (await isServerRunning()) {
       setServerStateIfCurrent(currentGeneration, "running");
       return;
@@ -586,6 +684,21 @@ export const PresentationView = () => {
     return `${currentSlideFileName} #${store.currentSlideNumber.toFixed(0)}`;
   };
 
+  const presentationSurface = () =>
+    getPresentationSurface(config.slidevTemplateLocation, serverState());
+
+  function handleOpenSettings() {
+    if (!openSlidevSettings(app)) {
+      setSettingsHint(true);
+    }
+  }
+
+  function handleOpenSetupLog() {
+    setupLogModal?.close();
+    setupLogModal = new CommandLogModal(app, setupState().logs);
+    setupLogModal.open();
+  }
+
   createEffect(
     on(
       () => [config.port, config.nodeExecutable, config.slidevTemplateLocation],
@@ -597,6 +710,7 @@ export const PresentationView = () => {
   );
 
   onMount(() => {
+    const unsubscribeSetup = setupController.subscribe(setSetupState);
     const fileOpenEvent = app.workspace.on("file-open", () => {
       untrack(() => {
         void ensureServer(true);
@@ -605,6 +719,7 @@ export const PresentationView = () => {
     void ensureServer();
 
     onCleanup(() => {
+      unsubscribeSetup();
       app.workspace.offref(fileOpenEvent);
     });
   });
@@ -613,60 +728,96 @@ export const PresentationView = () => {
     disposed = true;
     generation += 1;
     void stopOwnedProcess();
+    if (setupState().status === "running") {
+      void setupController.cancel();
+    }
     commandLogModal.close();
+    setupLogModal?.close();
   });
 
   return (
     <div class="slidev-view">
-      <Show when={config.isDebug}>
-        <SlidevDebugHeader
-          onStartServer={() => {
-            void ensureServer(true);
-          }}
-          onStopServer={handleStopServer}
-          onOpenLog={() => {
-            commandLogModal.open();
-          }}
-        />
-      </Show>
       <Show
-        when={serverState() === "running"}
+        when={presentationSurface() !== "onboarding"}
         fallback={
-          <SlidevFallback
-            activeFilePath={activeFilePath()}
-            commandLogMessages={commandLogMessages}
-            diagnostic={diagnostic()}
-            isStarting={
-              serverState() === "checking" || serverState() === "starting"
-            }
-            slidevUrl={serverBaseUrl()}
-            onStartServer={() => {
-              void ensureServer(true);
+          <SlidevSetupView
+            settingsHint={settingsHint()}
+            state={setupState()}
+            onOpenSettings={handleOpenSettings}
+            onSetup={() => {
+              void setupController.start();
             }}
-            onRefetch={() => {
-              void refreshServerStatus();
-            }}
-            onShowLog={() => {
-              commandLogModal.open();
-            }}
+            onShowLog={handleOpenSetupLog}
           />
         }
       >
-        <SlidevPresentation
-          title={title()}
-          src={iframeSrcUrl()}
-          onOpenSlideUrl={() => {
-            openExternal(
-              `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}`,
-            );
-          }}
-          onOpenSlidevPresenterUrl={() => {
-            openExternal(
-              `${serverBaseUrl()}presenter/${store.currentSlideNumber.toFixed(0)}`,
-            );
-          }}
-        />
+        <Show when={config.isDebug}>
+          <SlidevDebugHeader
+            onStartServer={() => {
+              void ensureServer(true);
+            }}
+            onStopServer={handleStopServer}
+            onOpenLog={() => {
+              commandLogModal.open();
+            }}
+          />
+        </Show>
+        <Show
+          when={presentationSurface() === "presentation"}
+          fallback={
+            <SlidevFallback
+              activeFilePath={activeFilePath()}
+              commandLogMessages={commandLogMessages}
+              diagnostic={diagnostic()}
+              isStarting={
+                serverState() === "checking" || serverState() === "starting"
+              }
+              slidevUrl={serverBaseUrl()}
+              onStartServer={() => {
+                void ensureServer(true);
+              }}
+              onRefetch={() => {
+                void refreshServerStatus();
+              }}
+              onShowLog={() => {
+                commandLogModal.open();
+              }}
+            />
+          }
+        >
+          <SlidevPresentation
+            title={title()}
+            src={iframeSrcUrl()}
+            onOpenSlideUrl={() => {
+              openExternal(
+                `${serverBaseUrl()}${store.currentSlideNumber.toFixed(0)}`,
+              );
+            }}
+            onOpenSlidevPresenterUrl={() => {
+              openExternal(
+                `${serverBaseUrl()}presenter/${store.currentSlideNumber.toFixed(0)}`,
+              );
+            }}
+          />
+        </Show>
       </Show>
     </div>
   );
 };
+
+interface SettingsNavigation {
+  open(): void;
+  openTabById(id: string): void;
+}
+
+function openSlidevSettings(app: App) {
+  // Obsidian does not expose settings navigation in its public API, so keep
+  // this optional and let the UI fall back to manual navigation instructions.
+  const settings = (app as App & { setting?: SettingsNavigation }).setting;
+  if (settings == null) {
+    return false;
+  }
+  settings.open();
+  settings.openTabById("slidev");
+  return true;
+}

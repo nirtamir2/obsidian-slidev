@@ -47,7 +47,8 @@ export class SlidevPlugin extends Plugin {
 
     this.registerView(
       SLIDEV_PRESENTATION_VIEW_TYPE,
-      (leaf) => new SlidevPresentationView(leaf, this.settings),
+      (leaf) =>
+        new SlidevPresentationView(leaf, this.settings, this.setupController),
     );
 
     this.registerSlideNumberPostProcessor();

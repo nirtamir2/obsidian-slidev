@@ -5,6 +5,7 @@ import type { SetStoreFunction } from "solid-js/store";
 import { createStore, reconcile } from "solid-js/store";
 import { insert } from "solid-js/web";
 import type { SlidevPluginSettings } from "../settings";
+import type { SlidevSetupController } from "../setup/SlidevSetupController";
 import { AppContext } from "./AppContext";
 import { PresentationView } from "./PresentationView";
 import { SettingsContext } from "./SettingsContext";
@@ -21,13 +22,19 @@ export class SlidevPresentationView extends ItemView {
 
   #dispose: (() => void) | undefined;
   #setSettings: SetStoreFunction<SlidevPluginSettings> | undefined;
+  readonly #setupController: SlidevSetupController;
 
   override getIcon(): IconName {
     return "presentation";
   }
-  constructor(leaf: WorkspaceLeaf, settings: SlidevPluginSettings) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    settings: SlidevPluginSettings,
+    setupController: SlidevSetupController,
+  ) {
     super(leaf);
     this.settings = { ...settings };
+    this.#setupController = setupController;
   }
 
   updateSettings(settings: SlidevPluginSettings) {
@@ -69,7 +76,7 @@ export class SlidevPresentationView extends ItemView {
         <AppContext.Provider value={this.app}>
           <SettingsContext.Provider value={settings}>
             <SlidevStoreContext.Provider value={slidevStore}>
-              <PresentationView />
+              <PresentationView setupController={this.#setupController} />
             </SlidevStoreContext.Provider>
           </SettingsContext.Provider>
         </AppContext.Provider>,
