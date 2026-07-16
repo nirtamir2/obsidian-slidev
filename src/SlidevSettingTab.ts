@@ -16,7 +16,7 @@ export class SlidevSettingTab extends PluginSettingTab {
     }, 750);
   }
 
-  display(): void {
+  override display(): void {
     this.containerEl.empty();
     this.addPortSetting();
     this.addSlidevProjectSetting();

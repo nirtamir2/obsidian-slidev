@@ -1,8 +1,8 @@
 {
   "name": "obsidian-slidev",
   "type": "module",
-  "version": "0.0.19",
-  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
+  "version": "0.0.20",
+  "packageManager": "pnpm@11.12.0+sha512.820a6fbd0d9f04c226638002aead1e45340a9139dd5dc077c1d83ef44aa2481c8eb6637b4c9aa696a3c7e35ba818e49cf27213e5f2b91138d09b7a3e26e898ba",
   "description": "Create Markdown-based presentations using Slidev.",
   "author": "Nir Tamir <nirtamir2@gmail.com>",
   "license": "MIT",
@@ -12,14 +12,17 @@
   },
   "keywords": [],
   "main": "main.js",
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
   "scripts": {
     "build": "vite build",
     "ci": "pnpm run lint && pnpm run format:check && pnpm run type-check && pnpm test && pnpm build && pnpm run verify:build",
     "dev": "vite build -w -m development",
     "format": "prettier \"**/*\" --write --ignore-unknown",
     "format:check": "prettier \"**/*\" --check --ignore-unknown",
-    "lint": "eslint \"**/*.{ts,tsx,js,jsx,json}\"",
-    "lint:fix": "eslint --fix \"**/*.{ts,tsx,js,jsx,json}\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:launcher": "vitest run src/launcher/slidevLauncher.test.ts",
     "type-check": "tsc --pretty --noEmit",
@@ -31,30 +34,26 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@codemirror/state": "6.5.0",
+    "@codemirror/view": "6.38.6",
     "@eslint-react/eslint-plugin": "^4.2.3",
     "@nirtamir2/eslint-config": "^0.2.7",
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
-    "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^24.3.0",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/node": "^24.13.3",
     "eslint": "^10.7.0",
     "eslint-plugin-format": "^2.0.1",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "eslint-plugin-react-you-might-not-need-an-effect": "^0.4.2",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "eslint-plugin-solid": "^0.14.5",
-    "obsidian": "^1.8.7",
-    "prettier": "^3.6.2",
-    "prettier-plugin-packagejson": "^2.5.22",
+    "obsidian": "^1.13.1",
+    "prettier": "^3.9.5",
+    "prettier-plugin-packagejson": "^3.0.2",
     "tslib": "2.8.1",
-    "typescript": "5.9.2",
-    "vite": "^7.3.6",
+    "typescript": "6.0.3",
+    "vite": "^8.1.4",
     "vite-plugin-solid": "^2.11.12",
-    "vite-plugin-static-copy": "^3.1.2",
+    "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^4.1.10"
-  },
-  "pnpm": {
-    "overrides": {
-      "@typescript-eslint/utils": "^8.63.0"
-    }
   }
 }

@@ -40,8 +40,7 @@ interface ProbeTimer {
 }
 
 type LaunchPreparation =
-  | { ok: true; prepared: PreparedSlidevLaunch }
-  | { ok: false; message: string };
+  { ok: true; prepared: PreparedSlidevLaunch } | { ok: false; message: string };
 
 export interface LogMessage {
   type: "error" | "message";
