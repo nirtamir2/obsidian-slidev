@@ -34,9 +34,7 @@ describe("presentation view state", () => {
   });
 });
 
-function createState(
-  status: SlidevSetupState["status"],
-): SlidevSetupState {
+function createState(status: SlidevSetupState["status"]): SlidevSetupState {
   return {
     logs: [],
     message: "Status",

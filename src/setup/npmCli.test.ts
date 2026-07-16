@@ -11,6 +11,17 @@ describe("getNpmCliCandidates", () => {
     ).toContain("/opt/node versions/v24/lib/node_modules/npm/bin/npm-cli.js");
   });
 
+  it("supports Homebrew's libexec npm layout", () => {
+    expect(
+      getNpmCliCandidates(
+        "/opt/homebrew/Cellar/node/26.0.0/bin/node",
+        "darwin",
+      ),
+    ).toContain(
+      "/opt/homebrew/Cellar/node/26.0.0/libexec/lib/node_modules/npm/bin/npm-cli.js",
+    );
+  });
+
   it("uses the standard Windows layout without parsing metacharacters", () => {
     expect(
       getNpmCliCandidates(

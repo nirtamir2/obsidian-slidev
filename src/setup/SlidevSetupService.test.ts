@@ -135,6 +135,32 @@ describe("slidev setup service", () => {
     });
   });
 
+  it("keeps recent npm output without retaining an unbounded log", async () => {
+    const installer = createInstallerProcess();
+    const service = createService(() => {
+      queueMicrotask(() => {
+        for (let index = 0; index < 600; index += 1) {
+          installer.stdout.write(`line ${index}\n`);
+        }
+        completeInstaller(installer);
+      });
+      return installer.child;
+    });
+
+    await expect(service.setup({ vaultRoot: testRoot })).resolves.toMatchObject(
+      {
+        ok: true,
+      },
+    );
+
+    const { logs } = service.getState();
+    const [firstLog] = logs;
+    const [lastLog] = logs.slice(-1);
+    expect(logs).toHaveLength(500);
+    expect(lastLog?.value).toBe("installed packages\n");
+    expect(firstLog?.value).not.toBe("line 0\n");
+  });
+
   it("shares an active setup and publishes progress to subscribers", async () => {
     const installer = createInstallerProcess();
     const service = createService(() => installer.child);

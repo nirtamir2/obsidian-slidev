@@ -89,6 +89,9 @@ const initialState: SlidevSetupState = {
   stage: "idle",
   status: "idle",
 };
+const maxSetupLogMessages = 500;
+const maxSetupLogValueLength = 64 * 1024;
+const truncatedLogPrefix = "[Earlier output truncated]\n";
 
 export class SlidevSetupService {
   private activeSetup: Promise<SlidevSetupResult> | null = null;
@@ -232,7 +235,16 @@ export class SlidevSetupService {
   }
 
   private appendLog(message: SlidevSetupLogMessage) {
-    this.setState({ ...this.state, logs: [...this.state.logs, message] });
+    const value =
+      message.value.length <= maxSetupLogValueLength
+        ? message.value
+        : `${truncatedLogPrefix}${message.value.slice(
+            -(maxSetupLogValueLength - truncatedLogPrefix.length),
+          )}`;
+    const logs = [...this.state.logs, { ...message, value }].slice(
+      -maxSetupLogMessages,
+    );
+    this.setState({ ...this.state, logs });
   }
 
   private cancelled(): SlidevSetupResult {

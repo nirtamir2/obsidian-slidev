@@ -11,7 +11,7 @@ export function getNpmCliCandidates(
 ): Array<string> {
   const pathImplementation = platform === "win32" ? path.win32 : path.posix;
   const nodeDirectory = pathImplementation.dirname(nodeExecutable);
-  return [
+  const candidates = [
     pathImplementation.join(
       nodeDirectory,
       "node_modules",
@@ -29,6 +29,21 @@ export function getNpmCliCandidates(
       "npm-cli.js",
     ),
   ];
+  if (platform === "darwin") {
+    candidates.push(
+      pathImplementation.join(
+        nodeDirectory,
+        "..",
+        "libexec",
+        "lib",
+        "node_modules",
+        "npm",
+        "bin",
+        "npm-cli.js",
+      ),
+    );
+  }
+  return candidates;
 }
 
 export async function findNpmCli(
