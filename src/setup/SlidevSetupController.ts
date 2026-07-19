@@ -12,8 +12,8 @@ interface SetupService {
 }
 
 interface SlidevSetupControllerOptions {
-  createInput(): SlidevSetupInput;
-  persistProjectPath(projectPath: string): Promise<void>;
+  createInput: () => SlidevSetupInput;
+  persistProjectPath: (projectPath: string) => Promise<void>;
   service: SetupService;
 }
 

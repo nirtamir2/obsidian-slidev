@@ -53,23 +53,19 @@ async function waitForChildExit(
 
   return await new Promise<boolean>((resolve) => {
     let settled = false;
-    const runtimeWindow: Pick<
-      typeof globalThis,
-      "clearTimeout" | "setTimeout"
-    > = globalThis;
     const finish = (didExit: boolean) => {
       if (settled) {
         return;
       }
       settled = true;
-      runtimeWindow.clearTimeout(timeout);
+      window.clearTimeout(timeout);
       childProcess.off("close", handleClose);
       resolve(didExit);
     };
     const handleClose = () => {
       finish(true);
     };
-    const timeout = runtimeWindow.setTimeout(() => {
+    const timeout = window.setTimeout(() => {
       finish(false);
     }, timeoutMs);
     childProcess.once("close", handleClose);
