@@ -11,6 +11,16 @@ export default nirtamir2(
       ignores: ["slidev-template/**", "typings/*", "*/electron.d.ts"],
     },
     {
+      files: ["**/*.{ts,tsx}"],
+      rules: {
+        "@typescript-eslint/no-unsafe-argument": "error",
+        "@typescript-eslint/no-unsafe-assignment": "error",
+        "@typescript-eslint/no-unsafe-call": "error",
+        "@typescript-eslint/no-unsafe-member-access": "error",
+        "@typescript-eslint/no-unsafe-return": "error",
+      },
+    },
+    {
       rules: {
         "no-new": "off",
         "n/prefer-global/process": "off",

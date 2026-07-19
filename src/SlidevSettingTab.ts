@@ -1,4 +1,4 @@
-import type { App, Debouncer } from "obsidian";
+import type { App, Debouncer, SettingDefinitionItem } from "obsidian";
 import { Notice, PluginSettingTab, Setting, debounce } from "obsidian";
 import type { SlidevPlugin } from "./SlidevPlugin";
 import { diagnoseSlidevProject } from "./launcher/slidevLauncher";
@@ -7,6 +7,38 @@ import {
   getQuickSetupControl,
   shouldOfferQuickSetup,
 } from "./setup/quickSetupState";
+
+interface SettingCopy {
+  desc: string;
+  name: string;
+}
+
+const settingCopy = {
+  debugMode: {
+    name: "Debug mode",
+    desc: "Show server controls and process output in the presentation view.",
+  },
+  nodeExecutable: {
+    name: "Node.js executable",
+    desc: "Leave blank to find Node.js on PATH, or enter the full path to the Node.js executable.",
+  },
+  port: {
+    name: "Port",
+    desc: "Port used by the local Slidev server (1–65535).",
+  },
+  quickSetup: {
+    name: "Quick setup",
+    desc: "Create .slidev in this vault, download the maintained packages, and run their npm install scripts.",
+  },
+  shouldRenderSlideNumberInMarkdownPreview: {
+    name: "Show slide numbers in reading view",
+    desc: "Show the next slide number beside Slidev separators in reading view.",
+  },
+  slidevProject: {
+    name: "Slidev project folder",
+    desc: "Folder containing a project-local installation of @slidev/cli.",
+  },
+} as const satisfies Record<string, SettingCopy>;
 
 export class SlidevSettingTab extends PluginSettingTab {
   plugin: SlidevPlugin;
@@ -19,6 +51,52 @@ export class SlidevSettingTab extends PluginSettingTab {
     this.saveSettingsDebounced = debounce(() => {
       void plugin.saveSettings();
     }, 750);
+  }
+
+  override getSettingDefinitions(): Array<SettingDefinitionItem> {
+    return [
+      {
+        ...settingCopy.quickSetup,
+        visible: () =>
+          shouldOfferQuickSetup(this.plugin.settings.slidevTemplateLocation),
+        render: (setting) =>
+          this.configureQuickSetupSetting(setting, () => {
+            this.update();
+          }),
+      },
+      {
+        ...settingCopy.port,
+        render: (setting) => {
+          this.configurePortSetting(setting);
+        },
+      },
+      {
+        ...settingCopy.slidevProject,
+        render: (setting) => {
+          this.configureSlidevProjectSetting(setting);
+        },
+      },
+      {
+        ...settingCopy.nodeExecutable,
+        render: (setting) => {
+          this.configureNodeExecutableSetting(setting);
+        },
+      },
+      {
+        ...settingCopy.shouldRenderSlideNumberInMarkdownPreview,
+        render: (setting) => {
+          this.configureShouldRenderSlideNumberInMarkdownPreviewSetting(
+            setting,
+          );
+        },
+      },
+      {
+        ...settingCopy.debugMode,
+        render: (setting) => {
+          this.configureDebugModeSetting(setting);
+        },
+      },
+    ];
   }
 
   override display(): void {
@@ -42,21 +120,27 @@ export class SlidevSettingTab extends PluginSettingTab {
   }
 
   private addQuickSetupSetting() {
-    const quickSetup = new Setting(this.containerEl)
-      .setName("Quick setup")
-      .setDesc(
-        "Create .slidev in this vault, download the maintained packages, and run their npm install scripts.",
-      );
+    const quickSetup = this.createSetting(settingCopy.quickSetup);
+    this.unsubscribeSetup = this.configureQuickSetupSetting(quickSetup, () => {
+      this.display();
+    });
+  }
+
+  private configureQuickSetupSetting(
+    quickSetup: Setting,
+    refresh: () => void,
+  ): () => void {
     const statusEl = quickSetup.infoEl.createDiv({
       cls: "slidev-setting-status",
     });
+    let unsubscribe: (() => void) | null = null;
 
     quickSetup.addButton((button) => {
       button.setCta().onClick(() => {
         void this.plugin.setupController.start();
       });
 
-      this.unsubscribeSetup = this.plugin.setupController.subscribe((state) => {
+      unsubscribe = this.plugin.setupController.subscribe((state) => {
         const control = getQuickSetupControl(state);
         button.setButtonText(control.label).setDisabled(control.disabled);
         statusEl.toggleClass(
@@ -74,98 +158,104 @@ export class SlidevSettingTab extends PluginSettingTab {
           !shouldOfferQuickSetup(this.plugin.settings.slidevTemplateLocation)
         ) {
           window.activeWindow.setTimeout(() => {
-            this.display();
+            refresh();
           }, 0);
         }
       });
     });
+
+    return () => {
+      unsubscribe?.();
+    };
   }
 
   private addPortSetting() {
-    new Setting(this.containerEl)
-      .setName("Port")
-      .setDesc("Port used by the local Slidev server (1–65535).")
-      .addText((text) =>
-        text
-          .setPlaceholder(String(DEFAULT_SETTINGS.port))
-          .setValue(String(this.plugin.settings.port))
-          .onChange((value) => {
-            const parsedNumber = Number(value);
-            if (!isPortNumber(parsedNumber)) {
-              void new Notice("Port must be an integer between 1 and 65535.");
-              return;
-            }
-            this.plugin.settings.port = parsedNumber;
-            this.saveSettingsDebounced();
-          }),
-      );
+    this.configurePortSetting(this.createSetting(settingCopy.port));
+  }
+
+  private configurePortSetting(setting: Setting) {
+    setting.addText((text) =>
+      text
+        .setPlaceholder(String(DEFAULT_SETTINGS.port))
+        .setValue(String(this.plugin.settings.port))
+        .onChange((value) => {
+          const parsedNumber = Number(value);
+          if (!isPortNumber(parsedNumber)) {
+            void new Notice("Port must be an integer between 1 and 65535.");
+            return;
+          }
+          this.plugin.settings.port = parsedNumber;
+          this.saveSettingsDebounced();
+        }),
+    );
   }
 
   private addDebugModeSetting() {
-    new Setting(this.containerEl)
-      .setName("Debug mode")
-      .setDesc(
-        "Show server controls and process output in the presentation view.",
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.isDebug)
-          .onChange(async (value) => {
-            this.plugin.settings.isDebug = value;
-            await this.plugin.saveSettings();
-          }),
-      );
+    this.configureDebugModeSetting(this.createSetting(settingCopy.debugMode));
+  }
+
+  private configureDebugModeSetting(setting: Setting) {
+    setting.addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.isDebug).onChange(async (value) => {
+        this.plugin.settings.isDebug = value;
+        await this.plugin.saveSettings();
+      }),
+    );
   }
 
   private addShouldRenderSlideNumberInMarkdownPreviewSetting() {
-    new Setting(this.containerEl)
-      .setName("Show slide numbers in reading view")
-      .setDesc(
-        "Show the next slide number beside Slidev separators in reading view.",
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(
-            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview,
-          )
-          .onChange(async (value) => {
-            this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview =
-              value;
-            await this.plugin.saveSettings();
-          }),
-      );
+    this.configureShouldRenderSlideNumberInMarkdownPreviewSetting(
+      this.createSetting(settingCopy.shouldRenderSlideNumberInMarkdownPreview),
+    );
+  }
+
+  private configureShouldRenderSlideNumberInMarkdownPreviewSetting(
+    setting: Setting,
+  ) {
+    setting.addToggle((toggle) =>
+      toggle
+        .setValue(this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview)
+        .onChange(async (value) => {
+          this.plugin.settings.shouldRenderSlideNumberInMarkdownPreview = value;
+          await this.plugin.saveSettings();
+        }),
+    );
   }
 
   private addNodeExecutableSetting() {
-    new Setting(this.containerEl)
-      .setName("Node.js executable")
-      .setDesc(
-        "Leave blank to find Node.js on PATH, or enter the full path to the Node.js executable.",
-      )
-      .addText((text) =>
-        text
-          .setPlaceholder("/path/to/node")
-          .setValue(this.plugin.settings.nodeExecutable)
-          .onChange((value) => {
-            this.plugin.settings.nodeExecutable = value.trim();
-            this.saveSettingsDebounced();
-          }),
-      );
+    this.configureNodeExecutableSetting(
+      this.createSetting(settingCopy.nodeExecutable),
+    );
+  }
+
+  private configureNodeExecutableSetting(setting: Setting) {
+    setting.addText((text) =>
+      text
+        .setPlaceholder("/path/to/node")
+        .setValue(this.plugin.settings.nodeExecutable)
+        .onChange((value) => {
+          this.plugin.settings.nodeExecutable = value.trim();
+          this.saveSettingsDebounced();
+        }),
+    );
   }
 
   private addSlidevProjectSetting() {
-    const projectSetting = new Setting(this.containerEl)
-      .setName("Slidev project folder")
-      .setDesc("Folder containing a project-local installation of @slidev/cli.")
-      .addText((text) =>
-        text
-          .setPlaceholder("/path/to/slidev-project")
-          .setValue(this.plugin.settings.slidevTemplateLocation)
-          .onChange((value) => {
-            this.plugin.settings.slidevTemplateLocation = value.trim();
-            this.saveSettingsDebounced();
-          }),
-      );
+    this.configureSlidevProjectSetting(
+      this.createSetting(settingCopy.slidevProject),
+    );
+  }
+
+  private configureSlidevProjectSetting(projectSetting: Setting) {
+    projectSetting.addText((text) =>
+      text
+        .setPlaceholder("/path/to/slidev-project")
+        .setValue(this.plugin.settings.slidevTemplateLocation)
+        .onChange((value) => {
+          this.plugin.settings.slidevTemplateLocation = value.trim();
+          this.saveSettingsDebounced();
+        }),
+    );
 
     const statusEl = projectSetting.infoEl.createDiv({
       cls: "slidev-setting-status",
@@ -198,5 +288,9 @@ export class SlidevSettingTab extends PluginSettingTab {
         }
       });
     });
+  }
+
+  private createSetting({ desc, name }: SettingCopy) {
+    return new Setting(this.containerEl).setName(name).setDesc(desc);
   }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 - 2026-07-19
+
+### Added
+
+- Plugin settings are searchable in Obsidian 1.13 and newer while retaining
+  the existing settings experience on older supported versions.
+- A concise onboarding presentation in the bundled example vault.
+
+### Changed
+
+- The bundled example vault now opens the onboarding presentation and uses
+  current plugin metadata.
+
 ## 0.1.0 - 2026-07-16
 
 ### Added
