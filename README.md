@@ -4,6 +4,8 @@ Preview Markdown presentations from your Obsidian vault with
 [Slidev](https://sli.dev/). The plugin opens the active note in an embedded
 presentation view and keeps the displayed slide aligned with your cursor.
 
+[![Install Slidev from Obsidian Community Plugins](https://img.shields.io/badge/Obsidian-Install%20Slidev-7C3AED?logo=obsidian)](https://community.obsidian.md/plugins/slidev)
+
 [![Slidev presentation view in Obsidian](./docs/screenshot.png)](./docs/screencast.mp4)
 
 ## Requirements
